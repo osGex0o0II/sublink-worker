@@ -1,5 +1,5 @@
 
-import { SING_BOX_CONFIG, generateRuleSets, generateRules, getOutbounds, PREDEFINED_RULE_SETS, DIRECT_DEFAULT_RULES, REJECT_ACTION_RULES } from '../config/index.js';
+import { SING_BOX_CONFIG, generateRuleSets, generateRules, getOutbounds, PREDEFINED_RULE_SETS, DIRECT_DEFAULT_RULES, REJECT_ACTION_RULES, SITE_RULE_SET_BASE_URL, IP_RULE_SET_BASE_URL, SITE_RULE_SETS, IP_RULE_SETS } from '../config/index.js';
 import { BaseConfigBuilder } from './BaseConfigBuilder.js';
 import { deepCopy, groupProxiesByCountry } from '../utils.js';
 import { addProxyWithDedup } from './helpers/proxyHelpers.js';
@@ -454,6 +454,101 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
         return String(tag).trim().toLowerCase().replace(/[\s-]+/g, '_');
     }
 
+    normalizeRuleSetReferences() {
+        const ruleSets = Array.isArray(this.config?.route?.rule_set) ? this.config.route.rule_set : [];
+        const ruleSetTags = ruleSets.map(ruleSet => ruleSet?.tag).filter(Boolean);
+        const ruleSetTagSet = new Set(ruleSetTags);
+
+        const normalizeRuleSet = (value) => {
+            if (typeof value !== 'string' || ruleSetTags.includes(value)) {
+                return value;
+            }
+            const normalized = this.findRuleSetAlias(value, [...ruleSetTagSet])
+                || this.findKnownRuleSetAlias(value);
+            if (!normalized) return value;
+
+            this.ensureRuleSetDefinition(normalized, ruleSetTagSet, ruleSets);
+            return normalized;
+        };
+        const normalizeRule = (rule) => {
+            if (!rule || typeof rule !== 'object') return;
+            if (Array.isArray(rule.rule_set)) {
+                rule.rule_set = rule.rule_set.map(normalizeRuleSet);
+            } else {
+                rule.rule_set = normalizeRuleSet(rule.rule_set);
+            }
+        };
+
+        (this.config?.dns?.rules || []).forEach(normalizeRule);
+        (this.config?.route?.rules || []).forEach(normalizeRule);
+    }
+
+    findRuleSetAlias(value, tags) {
+        const candidates = this.getRuleSetAliasCandidates(value);
+        for (const candidate of candidates) {
+            if (tags.includes(candidate)) {
+                return candidate;
+            }
+        }
+        return undefined;
+    }
+
+    findKnownRuleSetAlias(value) {
+        const candidates = this.getRuleSetAliasCandidates(value);
+        return candidates.find(candidate => (
+            SITE_RULE_SETS[candidate]
+            || this.getIpRuleNameFromTag(candidate)
+        ));
+    }
+
+    ensureRuleSetDefinition(tag, tagSet, ruleSets) {
+        if (tagSet.has(tag)) return;
+
+        const sitePath = SITE_RULE_SETS[tag];
+        if (sitePath) {
+            ruleSets.push({
+                tag,
+                type: 'remote',
+                format: 'binary',
+                url: `${SITE_RULE_SET_BASE_URL}${sitePath}`
+            });
+            tagSet.add(tag);
+            return;
+        }
+
+        const ipRuleName = this.getIpRuleNameFromTag(tag);
+        if (ipRuleName) {
+            ruleSets.push({
+                tag,
+                type: 'remote',
+                format: 'binary',
+                url: `${IP_RULE_SET_BASE_URL}${IP_RULE_SETS[ipRuleName]}`
+            });
+            tagSet.add(tag);
+        }
+    }
+
+    getIpRuleNameFromTag(tag) {
+        if (typeof tag !== 'string' || !tag.endsWith('-ip')) return undefined;
+        const ruleName = tag.slice(0, -3);
+        return IP_RULE_SETS[ruleName] ? ruleName : undefined;
+    }
+
+    getRuleSetAliasCandidates(value) {
+        const candidates = [];
+        const normalized = String(value).trim();
+        if (!normalized) return candidates;
+
+        candidates.push(normalized);
+        if (normalized.startsWith('geosite-')) {
+            candidates.push(normalized.slice('geosite-'.length));
+        }
+        if (normalized.startsWith('geoip-')) {
+            candidates.push(`${normalized.slice('geoip-'.length)}-ip`);
+        }
+        return [...new Set(candidates)];
+    }
+
     buildRouteTarget(rule) {
         if (REJECT_ACTION_RULES.has(rule?.outbound) || rule?.outbound === 'REJECT') {
             return { action: 'reject' };
@@ -546,6 +641,7 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
 
         this.config.route.auto_detect_interface = true;
         this.config.route.final = this.t('outboundNames.Fall Back');
+        this.normalizeRuleSetReferences();
         // 如果启用了 Clash UI，添加配置
         // 如果启用 Clash UI 或传入了自定义参数，添加/覆盖 Clash API 配置
         if (this.enableClashUI || this.externalController || this.externalUiDownloadUrl) {

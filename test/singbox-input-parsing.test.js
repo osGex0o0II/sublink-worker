@@ -213,6 +213,55 @@ describe('Sing-Box JSON input parsing', () => {
         expect(result.route.rules.some(rule => rule.outbound === 'direct')).toBe(false);
     });
 
+    it('should normalize legacy geosite and geoip rule-set references', async () => {
+        const configWithLegacyRuleSetReferences = JSON.stringify({
+            outbounds: [
+                {
+                    type: 'shadowsocks',
+                    tag: 'SS-Test',
+                    server: 'ss.example.com',
+                    server_port: 8388,
+                    method: 'aes-256-gcm',
+                    password: 'test-password'
+                }
+            ],
+            dns: {
+                servers: [
+                    { tag: 'local', address: 'https://223.5.5.5/dns-query' }
+                ],
+                rules: [
+                    { rule_set: ['geosite-cn'], server: 'local' }
+                ]
+            },
+            route: {
+                rules: [
+                    { rule_set: ['geosite-cn', 'geoip-cn'], outbound: 'DIRECT' }
+                ]
+            }
+        });
+
+        const builder = new SingboxConfigBuilder(
+            configWithLegacyRuleSetReferences,
+            [],
+            [],
+            null,
+            'zh-CN',
+            null,
+            false
+        );
+
+        const result = await builder.build();
+        const ruleSetTags = result.route.rule_set.map(ruleSet => ruleSet.tag);
+
+        expect(ruleSetTags).toEqual(expect.arrayContaining(['cn', 'cn-ip']));
+        expect(result.dns.rules[0].rule_set).toEqual(['cn']);
+        expect(result.route.rules.some(rule => (
+            Array.isArray(rule.rule_set)
+            && rule.rule_set.includes('cn')
+            && rule.rule_set.includes('cn-ip')
+        ))).toBe(true);
+    });
+
     it('should work with ClashConfigBuilder as well', async () => {
         const builder = new ClashConfigBuilder(
             sampleSingboxConfig,
