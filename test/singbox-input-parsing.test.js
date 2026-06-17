@@ -161,6 +161,58 @@ describe('Sing-Box JSON input parsing', () => {
         expect(result.dns.rules[0].server).toBe('dns_proxy');
     });
 
+    it('should repair dangling DNS and outbound references from imported configs', async () => {
+        const configWithDanglingReferences = JSON.stringify({
+            outbounds: [
+                {
+                    type: 'shadowsocks',
+                    tag: 'SS-Test',
+                    server: 'ss.example.com',
+                    server_port: 8388,
+                    method: 'aes-256-gcm',
+                    password: 'test-password'
+                },
+                {
+                    type: 'direct',
+                    tag: 'DIRECT'
+                }
+            ],
+            dns: {
+                servers: [
+                    { tag: 'local', address: 'https://223.5.5.5/dns-query', detour: 'direct' },
+                    { tag: 'remote', address: 'fakeip' },
+                    { tag: 'block', address: 'rcode://success' }
+                ],
+                rules: [
+                    { domain: ['example.com'], server: 'dns_direct' }
+                ],
+                final: 'dns_direct'
+            },
+            route: {
+                rules: [
+                    { ip_is_private: true, outbound: 'direct' }
+                ]
+            }
+        });
+
+        const builder = new SingboxConfigBuilder(
+            configWithDanglingReferences,
+            [],
+            [],
+            null,
+            'zh-CN',
+            null,
+            false
+        );
+
+        const result = await builder.build();
+
+        expect(result.dns.final).toBe('local');
+        expect(result.dns.rules[0].server).toBe('local');
+        expect(result.dns.servers.find(server => server.tag === 'local')?.detour).toBe('DIRECT');
+        expect(result.route.rules.some(rule => rule.outbound === 'direct')).toBe(false);
+    });
+
     it('should work with ClashConfigBuilder as well', async () => {
         const builder = new ClashConfigBuilder(
             sampleSingboxConfig,

@@ -390,31 +390,64 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
         const dns = this.config?.dns;
         const servers = Array.isArray(dns?.servers) ? dns.servers : [];
         const serverTags = servers.map(server => server?.tag).filter(Boolean);
-        if (serverTags.length === 0) return;
+        const outboundTags = (this.config?.outbounds || []).map(outbound => outbound?.tag).filter(Boolean);
+        if (serverTags.length === 0 && outboundTags.length === 0) return;
 
-        const tagByNormalized = new Map(
-            serverTags.map(tag => [this.normalizeReferenceTag(tag), tag])
-        );
-        const normalizeReference = (value) => {
-            if (typeof value !== 'string' || serverTags.includes(value)) {
+        const normalizeDnsReference = (value, fallbackTag) => {
+            const normalized = this.normalizeReferenceToTag(value, serverTags);
+            if (normalized) return normalized;
+            if (typeof value !== 'string') {
                 return value;
             }
-            return tagByNormalized.get(this.normalizeReferenceTag(value)) || value;
+            return fallbackTag ?? value;
         };
+        const normalizeOutboundReference = (value) => (
+            this.normalizeReferenceToTag(value, outboundTags) ?? value
+        );
 
-        dns.final = normalizeReference(dns.final);
-        (dns.rules || []).forEach(rule => {
+        const fallbackDnsTag = this.getFallbackDnsServerTag(serverTags);
+
+        if (dns && serverTags.length > 0) {
+            dns.final = normalizeDnsReference(dns.final, fallbackDnsTag);
+            (dns.rules || []).forEach(rule => {
+                if (!rule || typeof rule !== 'object') return;
+                if (Array.isArray(rule.server)) {
+                    rule.server = rule.server.map(server => normalizeDnsReference(server, fallbackDnsTag));
+                } else {
+                    rule.server = normalizeDnsReference(rule.server, fallbackDnsTag);
+                }
+            });
+            servers.forEach(server => {
+                server.domain_resolver = normalizeDnsReference(server.domain_resolver);
+                server.address_resolver = normalizeDnsReference(server.address_resolver);
+                server.detour = normalizeOutboundReference(server.detour);
+            });
+        }
+        (this.config?.route?.rules || []).forEach(rule => {
             if (!rule || typeof rule !== 'object') return;
-            if (Array.isArray(rule.server)) {
-                rule.server = rule.server.map(normalizeReference);
-            } else {
-                rule.server = normalizeReference(rule.server);
-            }
+            rule.outbound = normalizeOutboundReference(rule.outbound);
         });
-        servers.forEach(server => {
-            server.domain_resolver = normalizeReference(server.domain_resolver);
-            server.address_resolver = normalizeReference(server.address_resolver);
-        });
+    }
+
+    normalizeReferenceToTag(value, tags) {
+        if (typeof value !== 'string' || !Array.isArray(tags) || tags.length === 0) {
+            return undefined;
+        }
+        if (tags.includes(value)) {
+            return value;
+        }
+        const tagByNormalized = new Map(
+            tags.map(tag => [this.normalizeReferenceTag(tag), tag])
+        );
+        return tagByNormalized.get(this.normalizeReferenceTag(value));
+    }
+
+    getFallbackDnsServerTag(tags) {
+        if (!Array.isArray(tags) || tags.length === 0) return undefined;
+        return this.normalizeReferenceToTag('dns_direct', tags)
+            || this.normalizeReferenceToTag('local', tags)
+            || this.normalizeReferenceToTag('direct', tags)
+            || tags[0];
     }
 
     normalizeReferenceTag(tag) {
