@@ -122,6 +122,45 @@ describe('Sing-Box JSON input parsing', () => {
         expect(vmessProxy.transport?.path).toBe('/ws');
     });
 
+    it('should normalize DNS server references from imported configs', async () => {
+        const configWithSpacedDnsReference = JSON.stringify({
+            outbounds: [
+                {
+                    type: 'shadowsocks',
+                    tag: 'SS-Test',
+                    server: 'ss.example.com',
+                    server_port: 8388,
+                    method: 'aes-256-gcm',
+                    password: 'test-password'
+                }
+            ],
+            dns: {
+                final: 'dns direct',
+                rules: [
+                    {
+                        query_type: 'A',
+                        server: 'dns proxy'
+                    }
+                ]
+            }
+        });
+
+        const builder = new SingboxConfigBuilder(
+            configWithSpacedDnsReference,
+            [],
+            [],
+            null,
+            'zh-CN',
+            null,
+            false
+        );
+
+        const result = await builder.build();
+
+        expect(result.dns.final).toBe('dns_direct');
+        expect(result.dns.rules[0].server).toBe('dns_proxy');
+    });
+
     it('should work with ClashConfigBuilder as well', async () => {
         const builder = new ClashConfigBuilder(
             sampleSingboxConfig,

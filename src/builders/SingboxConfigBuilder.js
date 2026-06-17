@@ -386,6 +386,41 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
             });
     }
 
+    normalizeDnsServerReferences() {
+        const dns = this.config?.dns;
+        const servers = Array.isArray(dns?.servers) ? dns.servers : [];
+        const serverTags = servers.map(server => server?.tag).filter(Boolean);
+        if (serverTags.length === 0) return;
+
+        const tagByNormalized = new Map(
+            serverTags.map(tag => [this.normalizeReferenceTag(tag), tag])
+        );
+        const normalizeReference = (value) => {
+            if (typeof value !== 'string' || serverTags.includes(value)) {
+                return value;
+            }
+            return tagByNormalized.get(this.normalizeReferenceTag(value)) || value;
+        };
+
+        dns.final = normalizeReference(dns.final);
+        (dns.rules || []).forEach(rule => {
+            if (!rule || typeof rule !== 'object') return;
+            if (Array.isArray(rule.server)) {
+                rule.server = rule.server.map(normalizeReference);
+            } else {
+                rule.server = normalizeReference(rule.server);
+            }
+        });
+        servers.forEach(server => {
+            server.domain_resolver = normalizeReference(server.domain_resolver);
+            server.address_resolver = normalizeReference(server.address_resolver);
+        });
+    }
+
+    normalizeReferenceTag(tag) {
+        return String(tag).trim().toLowerCase().replace(/[\s-]+/g, '_');
+    }
+
     buildRouteTarget(rule) {
         if (REJECT_ACTION_RULES.has(rule?.outbound) || rule?.outbound === 'REJECT') {
             return { action: 'reject' };
@@ -404,6 +439,7 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
         // Validate outbounds: fill empty urltest groups with all proxies
         this.validateOutbounds();
         this.sanitizeLegacySpecialOutbounds();
+        this.normalizeDnsServerReferences();
 
         const attachProtocolIfNeeded = (entry, rule) => {
             if (Array.isArray(rule?.protocol) && rule.protocol.length > 0) {
