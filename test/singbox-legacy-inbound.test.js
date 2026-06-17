@@ -57,6 +57,8 @@ describe('sing-box 1.13+ compatibility: no legacy inbound fields', () => {
 
         for (const server of SING_BOX_CONFIG.dns.servers) {
             expect(server).not.toHaveProperty('address');
+            expect(server).not.toHaveProperty('address_resolver');
+            expect(server).not.toHaveProperty('strategy');
         }
 
         for (const rule of SING_BOX_CONFIG.dns.rules) {

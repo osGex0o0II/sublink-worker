@@ -395,7 +395,14 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
         if (Array.isArray(dns.servers)) {
             dns.servers.forEach(server => {
                 if (!server || typeof server !== 'object') return;
+                const legacyStrategy = server.strategy;
                 this.migrateLegacyDnsServer(server);
+                if (legacyStrategy === undefined) return;
+                if (server.tag) {
+                    this.migrateLegacyDnsServerStrategy(server.tag, legacyStrategy);
+                } else if (dns.strategy === undefined) {
+                    dns.strategy = legacyStrategy;
+                }
             });
         }
 
@@ -459,6 +466,26 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
             });
             delete server.address;
         }
+
+        delete server.strategy;
+    }
+
+    migrateLegacyDnsServerStrategy(serverTag, strategy) {
+        const dnsRules = this.config?.dns?.rules;
+        if (!Array.isArray(dnsRules)) return;
+
+        dnsRules.forEach(rule => {
+            if (!rule || typeof rule !== 'object' || rule.strategy !== undefined) return;
+            if (Array.isArray(rule.server)) {
+                if (rule.server.includes(serverTag)) {
+                    rule.strategy = strategy;
+                }
+                return;
+            }
+            if (rule.server === serverTag) {
+                rule.strategy = strategy;
+            }
+        });
     }
 
     convertLegacyDnsAddress(address) {
@@ -552,9 +579,6 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
             servers.forEach(server => {
                 if (server.domain_resolver !== undefined) {
                     server.domain_resolver = normalizeDnsReference(server.domain_resolver);
-                }
-                if (server.address_resolver !== undefined) {
-                    server.address_resolver = normalizeDnsReference(server.address_resolver);
                 }
                 if (server.detour !== undefined) {
                     server.detour = normalizeOutboundReference(server.detour);
