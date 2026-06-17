@@ -213,6 +213,71 @@ describe('Sing-Box JSON input parsing', () => {
         expect(result.route.rules.some(rule => rule.outbound === 'direct')).toBe(false);
     });
 
+    it('should migrate imported legacy DNS config for sing-box 1.12+', async () => {
+        const legacyDnsConfig = JSON.stringify({
+            outbounds: [
+                {
+                    type: 'shadowsocks',
+                    tag: 'SS-Test',
+                    server: 'ss.example.com',
+                    server_port: 8388,
+                    method: 'aes-256-gcm',
+                    password: 'test-password'
+                }
+            ],
+            dns: {
+                servers: [
+                    { tag: 'remote', address: 'tls://1.1.1.1', detour: '🚀 节点选择' },
+                    { tag: 'local', address: 'https://dns.alidns.com/dns-query', address_resolver: 'remote' },
+                    { tag: 'fake', address: 'fakeip' },
+                    { tag: 'block', address: 'rcode://refused' }
+                ],
+                rules: [
+                    { outbound: 'any', server: 'remote' },
+                    { domain: ['blocked.example'], server: 'block' }
+                ],
+                fakeip: {
+                    enabled: true,
+                    inet4_range: '198.18.0.0/15',
+                    inet6_range: 'fc00::/18'
+                },
+                final: 'local'
+            },
+            route: {
+                rules: []
+            }
+        });
+
+        const builder = new SingboxConfigBuilder(
+            legacyDnsConfig,
+            [],
+            [],
+            null,
+            'zh-CN',
+            null,
+            false
+        );
+
+        const result = await builder.build();
+        const remote = result.dns.servers.find(server => server.tag === 'remote');
+        const local = result.dns.servers.find(server => server.tag === 'local');
+        const fake = result.dns.servers.find(server => server.tag === 'fake');
+
+        expect(result.dns).not.toHaveProperty('fakeip');
+        expect(result.route.default_domain_resolver).toBe('local');
+        expect(remote).toMatchObject({ type: 'tls', server: '1.1.1.1' });
+        expect(local).toMatchObject({ type: 'https', server: 'dns.alidns.com', domain_resolver: 'remote' });
+        expect(local).not.toHaveProperty('address_resolver');
+        expect(fake).toMatchObject({ type: 'fakeip', inet4_range: '198.18.0.0/15', inet6_range: 'fc00::/18' });
+        expect(result.dns.servers.some(server => Object.prototype.hasOwnProperty.call(server, 'address'))).toBe(false);
+        expect(result.dns.servers.some(server => server.tag === 'block')).toBe(false);
+        expect(result.dns.rules.some(rule => Object.prototype.hasOwnProperty.call(rule, 'outbound'))).toBe(false);
+        expect(result.dns.rules.find(rule => rule.domain?.includes('blocked.example'))).toMatchObject({
+            action: 'predefined',
+            rcode: 'REFUSED'
+        });
+    });
+
     it('should normalize legacy geosite and geoip rule-set references', async () => {
         const configWithLegacyRuleSetReferences = JSON.stringify({
             outbounds: [

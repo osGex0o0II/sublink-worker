@@ -386,6 +386,138 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
             });
     }
 
+    sanitizeModernDnsConfig() {
+        if (this.singboxVersion === '1.11') return;
+
+        const dns = this.config?.dns;
+        if (!dns || typeof dns !== 'object') return;
+
+        if (Array.isArray(dns.servers)) {
+            dns.servers.forEach(server => {
+                if (!server || typeof server !== 'object') return;
+                this.migrateLegacyDnsServer(server);
+            });
+        }
+
+        const rcodeByTag = new Map(
+            (dns.servers || [])
+                .filter(server => server?.type === '__legacy_rcode' && server?.tag)
+                .map(server => [server.tag, server.rcode])
+        );
+        if (rcodeByTag.size > 0) {
+            dns.servers = dns.servers.filter(server => server?.type !== '__legacy_rcode');
+        }
+
+        const fakeipOptions = dns.fakeip;
+        if (fakeipOptions && typeof fakeipOptions === 'object') {
+            const fakeipServer = (dns.servers || []).find(server => server?.type === 'fakeip');
+            if (fakeipServer) {
+                if (fakeipServer.inet4_range === undefined && fakeipOptions.inet4_range !== undefined) {
+                    fakeipServer.inet4_range = fakeipOptions.inet4_range;
+                }
+                if (fakeipServer.inet6_range === undefined && fakeipOptions.inet6_range !== undefined) {
+                    fakeipServer.inet6_range = fakeipOptions.inet6_range;
+                }
+            }
+        }
+        delete dns.fakeip;
+
+        (dns.rules || []).forEach(rule => {
+            if (!rule || typeof rule !== 'object') return;
+            if (typeof rule.server === 'string' && rcodeByTag.has(rule.server)) {
+                rule.action = 'predefined';
+                rule.rcode = rcodeByTag.get(rule.server);
+                delete rule.server;
+            }
+            delete rule.outbound;
+        });
+
+        this.config.route = this.config.route || { rules: [] };
+        const serverTags = (dns.servers || []).map(server => server?.tag).filter(Boolean);
+        if (!this.config.route.default_domain_resolver) {
+            const fallbackDnsTag = this.getFallbackDnsServerTag(serverTags);
+            if (fallbackDnsTag) {
+                this.config.route.default_domain_resolver = fallbackDnsTag;
+            }
+        }
+    }
+
+    migrateLegacyDnsServer(server) {
+        if (server.address_resolver !== undefined) {
+            if (server.domain_resolver === undefined) {
+                server.domain_resolver = server.address_resolver;
+            }
+            delete server.address_resolver;
+        }
+
+        if (Object.prototype.hasOwnProperty.call(server, 'address')) {
+            const migrated = this.convertLegacyDnsAddress(server.address);
+            Object.entries(migrated).forEach(([key, value]) => {
+                if (server[key] === undefined && value !== undefined) {
+                    server[key] = value;
+                }
+            });
+            delete server.address;
+        }
+    }
+
+    convertLegacyDnsAddress(address) {
+        if (typeof address !== 'string' || address.trim() === '') {
+            return {};
+        }
+
+        const trimmed = address.trim();
+        if (trimmed === 'fakeip') {
+            return { type: 'fakeip' };
+        }
+        if (trimmed === 'local') {
+            return { type: 'local' };
+        }
+
+        const rcodeMatch = trimmed.match(/^rcode:\/\/(.+)$/i);
+        if (rcodeMatch) {
+            return { type: '__legacy_rcode', rcode: this.normalizeRcode(rcodeMatch[1]) };
+        }
+
+        const schemeMatch = trimmed.match(/^([a-z0-9+.-]+):\/\//i);
+        if (!schemeMatch) {
+            return { type: 'udp', server: trimmed };
+        }
+
+        const scheme = schemeMatch[1].toLowerCase();
+        try {
+            const url = new URL(trimmed);
+            const server = url.hostname || trimmed.slice(schemeMatch[0].length);
+            const serverPort = url.port ? Number(url.port) : undefined;
+            const path = url.pathname && url.pathname !== '/' ? url.pathname : undefined;
+
+            if (scheme === 'dhcp') {
+                return {
+                    type: 'dhcp',
+                    ...(server && server !== 'auto' ? { interface: server } : {})
+                };
+            }
+
+            return {
+                type: scheme,
+                server,
+                ...(serverPort ? { server_port: serverPort } : {}),
+                ...(path && path !== '/dns-query' ? { path } : {})
+            };
+        } catch {
+            return {
+                type: scheme,
+                server: trimmed.slice(schemeMatch[0].length)
+            };
+        }
+    }
+
+    normalizeRcode(rcode) {
+        const normalized = String(rcode || '').trim().toUpperCase();
+        if (normalized === 'SUCCESS') return 'NOERROR';
+        return normalized || 'REFUSED';
+    }
+
     normalizeDnsServerReferences() {
         const dns = this.config?.dns;
         const servers = Array.isArray(dns?.servers) ? dns.servers : [];
@@ -418,9 +550,15 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
                 }
             });
             servers.forEach(server => {
-                server.domain_resolver = normalizeDnsReference(server.domain_resolver);
-                server.address_resolver = normalizeDnsReference(server.address_resolver);
-                server.detour = normalizeOutboundReference(server.detour);
+                if (server.domain_resolver !== undefined) {
+                    server.domain_resolver = normalizeDnsReference(server.domain_resolver);
+                }
+                if (server.address_resolver !== undefined) {
+                    server.address_resolver = normalizeDnsReference(server.address_resolver);
+                }
+                if (server.detour !== undefined) {
+                    server.detour = normalizeOutboundReference(server.detour);
+                }
             });
         }
         (this.config?.route?.rules || []).forEach(rule => {
@@ -567,6 +705,7 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
         // Validate outbounds: fill empty urltest groups with all proxies
         this.validateOutbounds();
         this.sanitizeLegacySpecialOutbounds();
+        this.sanitizeModernDnsConfig();
         this.normalizeDnsServerReferences();
 
         const attachProtocolIfNeeded = (entry, rule) => {

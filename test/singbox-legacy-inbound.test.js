@@ -51,6 +51,19 @@ describe('sing-box 1.13+ compatibility: no legacy inbound fields', () => {
         }
     });
 
+    it('modern base config should not contain deprecated DNS fields', () => {
+        expect(SING_BOX_CONFIG.dns).not.toHaveProperty('fakeip');
+        expect(SING_BOX_CONFIG.route).toHaveProperty('default_domain_resolver', 'dns_resolver');
+
+        for (const server of SING_BOX_CONFIG.dns.servers) {
+            expect(server).not.toHaveProperty('address');
+        }
+
+        for (const rule of SING_BOX_CONFIG.dns.rules) {
+            expect(rule).not.toHaveProperty('outbound');
+        }
+    });
+
     it('built config (v1.12) should have sniff as route rule action, not on inbounds', async () => {
         const builder = new SingboxConfigBuilder(
             sampleInput, [], [], null, 'zh-CN', null, false
