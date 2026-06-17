@@ -427,6 +427,14 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
                 }
             }
         }
+        (dns.servers || [])
+            .filter(server => server?.type === 'fakeip')
+            .forEach(server => {
+                if (server.inet4_range === undefined && server.inet6_range === undefined) {
+                    server.inet4_range = '198.18.0.0/15';
+                    server.inet6_range = 'fc00::/18';
+                }
+            });
         delete dns.fakeip;
 
         (dns.rules || []).forEach(rule => {
@@ -582,6 +590,9 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
                 }
                 if (server.detour !== undefined) {
                     server.detour = normalizeOutboundReference(server.detour);
+                    if (this.isDirectOutboundTag(server.detour, outboundTags)) {
+                        delete server.detour;
+                    }
                 }
             });
         }
@@ -610,6 +621,14 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
             || this.normalizeReferenceToTag('local', tags)
             || this.normalizeReferenceToTag('direct', tags)
             || tags[0];
+    }
+
+    isDirectOutboundTag(tag, outboundTags = []) {
+        const normalizedTag = this.normalizeReferenceToTag(tag, outboundTags) ?? tag;
+        return (this.config?.outbounds || []).some(outbound => (
+            outbound?.type === 'direct'
+            && normalizeGroupName(outbound?.tag) === normalizeGroupName(normalizedTag)
+        ));
     }
 
     normalizeReferenceTag(tag) {

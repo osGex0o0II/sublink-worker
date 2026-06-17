@@ -209,7 +209,12 @@ describe('Sing-Box JSON input parsing', () => {
 
         expect(result.dns.final).toBe('local');
         expect(result.dns.rules[0].server).toBe('local');
-        expect(result.dns.servers.find(server => server.tag === 'local')?.detour).toBe('DIRECT');
+        expect(result.dns.servers.find(server => server.tag === 'local')).not.toHaveProperty('detour');
+        expect(result.dns.servers.find(server => server.tag === 'remote')).toMatchObject({
+            type: 'fakeip',
+            inet4_range: '198.18.0.0/15',
+            inet6_range: 'fc00::/18'
+        });
         expect(result.route.rules.some(rule => rule.outbound === 'direct')).toBe(false);
     });
 
