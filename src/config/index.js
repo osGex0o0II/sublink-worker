@@ -18,6 +18,9 @@ export {
 	CUSTOM_RULES,
 	UNIFIED_RULES,
 	PREDEFINED_RULE_SETS,
+	BASE_RULES,
+	AI_AUTO_TEST_URL,
+	AI_AUTO_RULES,
 	DIRECT_DEFAULT_RULES,
 	REJECT_ACTION_RULES,
 	SITE_RULE_SETS,
@@ -28,6 +31,7 @@ export {
 
 // Rule Generators
 export {
+	normalizeSelectedRules,
 	getOutbounds,
 	generateRules,
 	generateRuleSets,

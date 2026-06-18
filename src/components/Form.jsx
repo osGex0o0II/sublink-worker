@@ -1,6 +1,6 @@
 /** @jsxRuntime automatic */
 /** @jsxImportSource hono/jsx */
-import { PREDEFINED_RULE_SETS, UNIFIED_RULES } from '../config/index.js';
+import { BASE_RULES, PREDEFINED_RULE_SETS, UNIFIED_RULES } from '../config/index.js';
 import { CustomRules } from './CustomRules.jsx';
 import { TextareaWithActions } from './TextareaWithActions.jsx';
 import { ValidatedTextarea } from './ValidatedTextarea.jsx';
@@ -78,6 +78,7 @@ export const Form = (props) => {
   const scriptContent = `
     window.APP_TRANSLATIONS = ${JSON.stringify(translations)};
     window.PREDEFINED_RULE_SETS = ${JSON.stringify(PREDEFINED_RULE_SETS)};
+    window.BASE_RULES = ${JSON.stringify(BASE_RULES)};
     window.APP_LANG = ${JSON.stringify(lang || 'zh-CN')};
     if (typeof __name === 'undefined') { var __name = function(fn) { return fn; }; }
     (${formLogicFn.toString()})();
@@ -171,7 +172,7 @@ export const Form = (props) => {
           </div>
 
   <div class="flex flex-wrap gap-2">
-    {UNIFIED_RULES.map((rule) => (
+    {UNIFIED_RULES.filter(rule => !BASE_RULES.includes(rule.name)).map((rule) => (
       <label class="flex items-center px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 hover:bg-primary-50 dark:hover:bg-primary-900/20 cursor-pointer transition-colors group">
         <input
           type="checkbox"

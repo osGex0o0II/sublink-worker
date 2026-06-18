@@ -372,7 +372,7 @@ describe('Sing-Box JSON input parsing', () => {
         ))).toBe(true);
     });
 
-    it('should include Apple Push domain rule in balanced preset', async () => {
+    it('should include base rules and default service rules in balanced preset', async () => {
         const builder = new SingboxConfigBuilder(
             sampleSingboxConfig,
             'balanced',
@@ -390,6 +390,47 @@ describe('Sing-Box JSON input parsing', () => {
                 domain_suffix: ['push.apple.com'],
                 outbound: '🍏 苹果推送'
             })
+        ]));
+        expect(result.route.rules).toEqual(expect.arrayContaining([
+            expect.objectContaining({ rule_set: ['private-ip'], outbound: '🏠 私有网络' }),
+            expect.objectContaining({ rule_set: ['github', 'gitlab'], outbound: '🐱 Github' }),
+            expect.objectContaining({ rule_set: ['category-ai-!cn'], outbound: '💬 AI 服务' })
+        ]));
+        expect(result.outbounds).toEqual(expect.arrayContaining([
+            expect.objectContaining({
+                type: 'urltest',
+                tag: '🤖 AI 自动选择',
+                url: 'https://api.openai.com/v1/models'
+            }),
+            expect.objectContaining({
+                type: 'selector',
+                tag: '💬 AI 服务',
+                outbounds: expect.arrayContaining(['🤖 AI 自动选择'])
+            })
+        ]));
+    });
+
+    it('should always include Private and Location:CN as base rules', async () => {
+        const builder = new SingboxConfigBuilder(
+            sampleSingboxConfig,
+            ['Google'],
+            [],
+            null,
+            'zh-CN',
+            null,
+            false
+        );
+
+        const result = await builder.build();
+
+        expect(result.route.rules.some(rule => (
+            rule.outbound === '🔒 国内服务'
+            && Array.isArray(rule.rule_set)
+            && rule.rule_set.includes('cn')
+        ))).toBe(true);
+        expect(result.route.rules).toEqual(expect.arrayContaining([
+            expect.objectContaining({ rule_set: ['private-ip'], outbound: '🏠 私有网络' }),
+            expect.objectContaining({ rule_set: ['google'], outbound: '🔍 谷歌服务' })
         ]));
     });
 

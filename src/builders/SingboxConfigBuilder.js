@@ -1,5 +1,5 @@
 
-import { SING_BOX_CONFIG, generateRuleSets, generateRules, getOutbounds, PREDEFINED_RULE_SETS, DIRECT_DEFAULT_RULES, REJECT_ACTION_RULES, SITE_RULE_SET_BASE_URL, IP_RULE_SET_BASE_URL, SITE_RULE_SETS, IP_RULE_SETS } from '../config/index.js';
+import { SING_BOX_CONFIG, generateRuleSets, generateRules, getOutbounds, PREDEFINED_RULE_SETS, AI_AUTO_RULES, AI_AUTO_TEST_URL, DIRECT_DEFAULT_RULES, REJECT_ACTION_RULES, SITE_RULE_SET_BASE_URL, IP_RULE_SET_BASE_URL, SITE_RULE_SETS, IP_RULE_SETS } from '../config/index.js';
 import { BaseConfigBuilder } from './BaseConfigBuilder.js';
 import { deepCopy, groupProxiesByCountry } from '../utils.js';
 import { addProxyWithDedup } from './helpers/proxyHelpers.js';
@@ -157,6 +157,22 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
                 const tag = this.t(`outboundNames.${outbound}`);
                 if (this.hasOutboundTag(tag)) {
                     return;
+                }
+                if (AI_AUTO_RULES.has(outbound)) {
+                    const autoTag = this.t('outboundNames.AI Auto');
+                    const aiCandidates = uniqueNames(proxyList);
+                    if (aiCandidates.length > 0 && !this.hasOutboundTag(autoTag)) {
+                        this.config.outbounds.push({
+                            type: "urltest",
+                            tag: autoTag,
+                            outbounds: aiCandidates,
+                            url: AI_AUTO_TEST_URL,
+                            interval: "5m"
+                        });
+                    }
+                    if (aiCandidates.length > 0 || this.hasOutboundTag(autoTag)) {
+                        selectorMembers = [autoTag, ...selectorMembers.filter(p => p !== autoTag)];
+                    }
                 }
                 // For rules that should default to DIRECT, move DIRECT to the front
                 if (DIRECT_DEFAULT_RULES.has(outbound)) {

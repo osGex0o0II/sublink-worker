@@ -1,6 +1,6 @@
 import { BaseConfigBuilder } from './BaseConfigBuilder.js';
 import { groupProxiesByCountry } from '../utils.js';
-import { SURGE_CONFIG, SURGE_SITE_RULE_SET_BASEURL, SURGE_IP_RULE_SET_BASEURL, generateRules, getOutbounds, PREDEFINED_RULE_SETS, DIRECT_DEFAULT_RULES } from '../config/index.js';
+import { SURGE_CONFIG, SURGE_SITE_RULE_SET_BASEURL, SURGE_IP_RULE_SET_BASEURL, generateRules, getOutbounds, PREDEFINED_RULE_SETS, AI_AUTO_RULES, AI_AUTO_TEST_URL, DIRECT_DEFAULT_RULES } from '../config/index.js';
 import { addProxyWithDedup } from './helpers/proxyHelpers.js';
 import { buildSelectorMembers, buildNodeSelectMembers, buildCustomRuleMembers, uniqueNames } from './helpers/groupBuilder.js';
 
@@ -281,6 +281,23 @@ export class SurgeConfigBuilder extends BaseConfigBuilder {
                 const name = this.t(`outboundNames.${outbound}`);
                 if (this.hasProxyGroup(name)) {
                     return;
+                }
+                if (AI_AUTO_RULES.has(outbound)) {
+                    const autoName = this.t('outboundNames.AI Auto');
+                    const aiCandidates = this.sanitizeOptions(proxyList);
+                    if (aiCandidates.length > 0 && !this.hasProxyGroup(autoName)) {
+                        this.config['proxy-groups'].push(
+                            this.createProxyGroup(
+                                autoName,
+                                'url-test',
+                                aiCandidates,
+                                `, url=${AI_AUTO_TEST_URL}, interval=300`
+                            )
+                        );
+                    }
+                    if (aiCandidates.length > 0 || this.hasProxyGroup(autoName)) {
+                        options = [autoName, ...options.filter(p => p !== autoName)];
+                    }
                 }
                 // For rules that should default to DIRECT, move DIRECT to the front
                 if (DIRECT_DEFAULT_RULES.has(outbound)) {

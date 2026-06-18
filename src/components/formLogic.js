@@ -190,8 +190,13 @@ export const formLogicFn = (t) => {
                 // PREDEFINED_RULE_SETS will be injected globally
                 const rules = window.PREDEFINED_RULE_SETS;
                 if (rules && rules[this.selectedPredefinedRule]) {
-                    this.selectedRules = rules[this.selectedPredefinedRule];
+                    this.selectedRules = this.withoutBaseRules(rules[this.selectedPredefinedRule]);
                 }
+            },
+
+            withoutBaseRules(rules = []) {
+                const baseRules = Array.isArray(window.BASE_RULES) ? window.BASE_RULES : [];
+                return (Array.isArray(rules) ? rules : []).filter(rule => !baseRules.includes(rule));
             },
 
             getSubconverterUrl() {
@@ -596,7 +601,7 @@ export const formLogicFn = (t) => {
                     try {
                         const parsed = JSON.parse(selectedRules);
                         if (Array.isArray(parsed)) {
-                            this.selectedRules = parsed;
+                            this.selectedRules = this.withoutBaseRules(parsed);
                             this.selectedPredefinedRule = 'custom';
                         }
                     } catch (e) {

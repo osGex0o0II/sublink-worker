@@ -11,8 +11,6 @@ describe('selectedRules backward compatibility', () => {
     it('should accept "minimal" preset name', () => {
         const result = parseSelectedRules('minimal');
         expect(result).toEqual(PREDEFINED_RULE_SETS.minimal);
-        expect(result).toContain('Location:CN');
-        expect(result).toContain('Private');
         expect(result).toContain('Non-China');
     });
 
@@ -27,7 +25,7 @@ describe('selectedRules backward compatibility', () => {
         expect(result).toEqual(PREDEFINED_RULE_SETS.balanced);
         expect(result.length).toBeGreaterThan(PREDEFINED_RULE_SETS.minimal.length);
         expect(result).toContain('Apple Push');
-        expect(result).not.toContain('Github');
+        expect(result).toContain('Github');
     });
 
     it('should accept "media" preset name', () => {

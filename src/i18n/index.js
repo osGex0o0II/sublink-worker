@@ -112,6 +112,7 @@ export const translations = {
     // 规则名称和出站名称的翻译
     outboundNames: {
       'Auto Select': '⚡ 自动选择',
+      'AI Auto': '🤖 AI 自动选择',
       'Node Select': '🚀 节点选择',
       'Fall Back': '🐟 漏网之鱼',
       'Ad Block': '🛑 广告拦截',
@@ -278,6 +279,7 @@ export const translations = {
     jsonValidationErrors: 'JSON validation errors',
     outboundNames: {
       'Auto Select': '⚡ Auto Select',
+      'AI Auto': '🤖 AI Auto',
       'Node Select': '🚀 Node Select',
       'Fall Back': '🐟 Fall Back',
       'Ad Block': '🛑 Ad Blocking',
@@ -438,6 +440,7 @@ export const translations = {
     jsonValidationErrors: 'خطاهای اعتبارسنجی JSON',
     outboundNames: {
       'Auto Select': '⚡ انتخاب خودکار',
+      'AI Auto': '🤖 انتخاب خودکار AI',
       'Node Select': '🚀 انتخاب نود',
       'Fall Back': '🐟 فال بک',
       'Ad Block': '🛑 مسدودسازی تبلیغات',
@@ -598,6 +601,7 @@ export const translations = {
     jsonValidationErrors: 'Ошибки проверки JSON',
     outboundNames: {
       'Auto Select': '⚡ Автовыбор',
+      'AI Auto': '🤖 AI Автовыбор',
       'Node Select': '🚀 Выбор узла',
       'Fall Back': '🐟 Резерв',
       'Ad Block': '🛑 Блокировка рекламы',

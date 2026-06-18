@@ -3,7 +3,7 @@
  * Functions for generating rules and rule sets
  */
 
-import { UNIFIED_RULES, PREDEFINED_RULE_SETS, SITE_RULE_SETS, IP_RULE_SETS, CLASH_SITE_RULE_SETS, CLASH_IP_RULE_SETS } from './rules.js';
+import { BASE_RULES, UNIFIED_RULES, PREDEFINED_RULE_SETS, SITE_RULE_SETS, IP_RULE_SETS, CLASH_SITE_RULE_SETS, CLASH_IP_RULE_SETS } from './rules.js';
 import { SITE_RULE_SET_BASE_URL, IP_RULE_SET_BASE_URL, CLASH_SITE_RULE_SET_BASE_URL, CLASH_IP_RULE_SET_BASE_URL } from './ruleUrls.js';
 
 function toStringArray(value) {
@@ -18,18 +18,7 @@ function toStringArray(value) {
 	return [];
 }
 
-// Helper function to get outbounds based on selected rule names
-export function getOutbounds(selectedRuleNames) {
-	if (!selectedRuleNames || !Array.isArray(selectedRuleNames)) {
-		return [];
-	}
-	return UNIFIED_RULES
-		.filter(rule => selectedRuleNames.includes(rule.name))
-		.map(rule => rule.name);
-}
-
-// Helper function to generate rules based on selected rule names
-export function generateRules(selectedRules = [], customRules = []) {
+export function normalizeSelectedRules(selectedRules = []) {
 	if (typeof selectedRules === 'string' && PREDEFINED_RULE_SETS[selectedRules]) {
 		selectedRules = PREDEFINED_RULE_SETS[selectedRules];
 	}
@@ -37,6 +26,21 @@ export function generateRules(selectedRules = [], customRules = []) {
 	if (!selectedRules || selectedRules.length === 0) {
 		selectedRules = PREDEFINED_RULE_SETS.minimal;
 	}
+
+	return [...new Set([...BASE_RULES, ...selectedRules])];
+}
+
+// Helper function to get outbounds based on selected rule names
+export function getOutbounds(selectedRuleNames) {
+	selectedRuleNames = normalizeSelectedRules(selectedRuleNames);
+	return UNIFIED_RULES
+		.filter(rule => selectedRuleNames.includes(rule.name))
+		.map(rule => rule.name);
+}
+
+// Helper function to generate rules based on selected rule names
+export function generateRules(selectedRules = [], customRules = []) {
+	selectedRules = normalizeSelectedRules(selectedRules);
 
 	const rules = [];
 
@@ -70,13 +74,7 @@ export function generateRules(selectedRules = [], customRules = []) {
 }
 
 export function generateRuleSets(selectedRules = [], customRules = []) {
-	if (typeof selectedRules === 'string' && PREDEFINED_RULE_SETS[selectedRules]) {
-		selectedRules = PREDEFINED_RULE_SETS[selectedRules];
-	}
-
-	if (!selectedRules || selectedRules.length === 0) {
-		selectedRules = PREDEFINED_RULE_SETS.minimal;
-	}
+	selectedRules = normalizeSelectedRules(selectedRules);
 
 	const selectedRulesSet = new Set(selectedRules);
 
@@ -143,13 +141,7 @@ export function generateRuleSets(selectedRules = [], customRules = []) {
 
 // Generate rule sets for Clash using .mrs format
 export function generateClashRuleSets(selectedRules = [], customRules = [], useMrs = true) {
-	if (typeof selectedRules === 'string' && PREDEFINED_RULE_SETS[selectedRules]) {
-		selectedRules = PREDEFINED_RULE_SETS[selectedRules];
-	}
-
-	if (!selectedRules || selectedRules.length === 0) {
-		selectedRules = PREDEFINED_RULE_SETS.minimal;
-	}
+	selectedRules = normalizeSelectedRules(selectedRules);
 
 	// Determine format based on client compatibility
 	const format = useMrs ? 'mrs' : 'yaml';

@@ -6,7 +6,7 @@
 import { createTranslator } from '../i18n/index.js';
 import { generateRules } from './ruleGenerators.js';
 import { COUNTRY_DATA } from '../utils.js';
-import { DIRECT_DEFAULT_RULES } from './rules.js';
+import { AI_AUTO_RULES, AI_AUTO_TEST_URL, DIRECT_DEFAULT_RULES } from './rules.js';
 
 // Rule names that should default to REJECT
 const REJECT_RULES = new Set(['Ad Block']);
@@ -103,6 +103,7 @@ export function generateSubconverterConfig({ selectedRules = [], customRules = [
 
 	const nodeSelectName = t('outboundNames.Node Select');
 	const autoSelectName = t('outboundNames.Auto Select');
+	const aiAutoName = t('outboundNames.AI Auto');
 	const manualSwitchName = t('outboundNames.Manual Switch');
 
 	// Pre-compute country group names and lines if groupByCountry is enabled
@@ -143,6 +144,10 @@ export function generateSubconverterConfig({ selectedRules = [], customRules = [
 		lines.push(`custom_proxy_group=${autoSelectName}\`url-test\`.*\`${SPEED_TEST_URL}\`300,,50`);
 	}
 
+	if (rules.some(rule => AI_AUTO_RULES.has(rule.outbound))) {
+		lines.push(`custom_proxy_group=${aiAutoName}\`url-test\`.*\`${AI_AUTO_TEST_URL}\`300,,50`);
+	}
+
 	// Manual Switch group (when groupByCountry, provides access to all individual nodes)
 	if (groupByCountry) {
 		lines.push(`custom_proxy_group=${manualSwitchName}\`select\`.*`);
@@ -168,6 +173,21 @@ export function generateSubconverterConfig({ selectedRules = [], customRules = [
 			lines.push(`custom_proxy_group=${groupName}\`select\`[]REJECT\`[]DIRECT`);
 		} else if (DIRECT_DEFAULT_RULES.has(rule.outbound)) {
 			lines.push(`custom_proxy_group=${groupName}\`select\`[]DIRECT\`[]${nodeSelectName}`);
+		} else if (AI_AUTO_RULES.has(rule.outbound)) {
+			if (groupByCountry) {
+				const refs = buildCountryGroupRefs(countryGroupNames);
+				if (includeAutoSelect) {
+					lines.push(`custom_proxy_group=${groupName}\`select\`[]${aiAutoName}\`[]${nodeSelectName}\`[]${autoSelectName}\`[]${manualSwitchName}\`${refs}\`[]DIRECT`);
+				} else {
+					lines.push(`custom_proxy_group=${groupName}\`select\`[]${aiAutoName}\`[]${nodeSelectName}\`[]${manualSwitchName}\`${refs}\`[]DIRECT`);
+				}
+			} else {
+				if (includeAutoSelect) {
+					lines.push(`custom_proxy_group=${groupName}\`select\`[]${aiAutoName}\`[]${nodeSelectName}\`[]${autoSelectName}\`[]DIRECT\`.*`);
+				} else {
+					lines.push(`custom_proxy_group=${groupName}\`select\`[]${aiAutoName}\`[]${nodeSelectName}\`[]DIRECT\`.*`);
+				}
+			}
 		} else {
 			if (groupByCountry) {
 				const refs = buildCountryGroupRefs(countryGroupNames);

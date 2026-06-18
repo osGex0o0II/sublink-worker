@@ -1,5 +1,5 @@
 import yaml from 'js-yaml';
-import { CLASH_CONFIG, generateRules, generateClashRuleSets, getOutbounds, PREDEFINED_RULE_SETS, DIRECT_DEFAULT_RULES } from '../config/index.js';
+import { CLASH_CONFIG, generateRules, generateClashRuleSets, getOutbounds, PREDEFINED_RULE_SETS, AI_AUTO_RULES, AI_AUTO_TEST_URL, DIRECT_DEFAULT_RULES } from '../config/index.js';
 import { BaseConfigBuilder } from './BaseConfigBuilder.js';
 import { deepCopy, groupProxiesByCountry } from '../utils.js';
 import { addProxyWithDedup } from './helpers/proxyHelpers.js';
@@ -401,6 +401,23 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
                 const name = this.t(`outboundNames.${outbound}`);
                 if (!this.hasProxyGroup(name)) {
                     let proxies = this.buildSelectGroupMembers(proxyList);
+                    if (AI_AUTO_RULES.has(outbound)) {
+                        const autoName = this.t('outboundNames.AI Auto');
+                        const aiCandidates = uniqueNames(proxyList);
+                        if (aiCandidates.length > 0 && !this.hasProxyGroup(autoName)) {
+                            this.config['proxy-groups'].push({
+                                type: "url-test",
+                                name: autoName,
+                                proxies: deepCopy(aiCandidates),
+                                url: AI_AUTO_TEST_URL,
+                                interval: 300,
+                                lazy: false
+                            });
+                        }
+                        if (aiCandidates.length > 0 || this.hasProxyGroup(autoName)) {
+                            proxies = [autoName, ...proxies.filter(p => p !== autoName)];
+                        }
+                    }
                     // For rules that should default to DIRECT, move DIRECT to the front
                     if (DIRECT_DEFAULT_RULES.has(outbound)) {
                         proxies = ['DIRECT', ...proxies.filter(p => p !== 'DIRECT')];

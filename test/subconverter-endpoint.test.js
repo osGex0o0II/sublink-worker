@@ -34,7 +34,7 @@ describe('GET /subconverter', () => {
         const res = await app.request('http://localhost/subconverter');
         const text = await res.text();
 
-        // balanced preset includes Google, Youtube, AI Services, Telegram, Apple Push, etc.
+        // balanced preset includes GitHub, Google, Youtube, AI Services, Telegram, Apple Push, etc.
         PREDEFINED_RULE_SETS.balanced.forEach(ruleName => {
             // Each selected rule should produce at least one ruleset line
             // (either GEOSITE or GEOIP)
@@ -43,10 +43,12 @@ describe('GET /subconverter', () => {
 
         // Check for specific rules from balanced set
         expect(text).toContain('GEOSITE,google');
+        expect(text).toContain('GEOSITE,github');
         expect(text).toContain('GEOSITE,youtube');
         expect(text).toContain('GEOIP,telegram');
         expect(text).toContain('DOMAIN-SUFFIX,push.apple.com');
-        expect(text).not.toContain('GEOSITE,github');
+        expect(text).toContain('custom_proxy_group=🤖 AI 自动选择`url-test`.*`https://api.openai.com/v1/models`300,,50');
+        expect(text).toContain('custom_proxy_group=💬 AI 服务`select`[]🤖 AI 自动选择');
     });
 
     it('accepts minimal preset', async () => {
@@ -54,7 +56,7 @@ describe('GET /subconverter', () => {
         const res = await app.request('http://localhost/subconverter?selectedRules=minimal');
         const text = await res.text();
 
-        // minimal: Location:CN, Private, Non-China
+        // minimal/domestic only selects Non-China; Private and Location:CN are base rules.
         expect(text).toContain('GEOSITE,geolocation-cn');
         expect(text).toContain('GEOIP,private');
         expect(text).toContain('GEOSITE,geolocation-!cn');
@@ -121,6 +123,8 @@ describe('GET /subconverter', () => {
         expect(text).toContain('GEOSITE,google');
         expect(text).toContain('GEOIP,google');
         expect(text).toContain('GEOIP,telegram');
+        expect(text).toContain('GEOSITE,geolocation-cn');
+        expect(text).toContain('GEOIP,private');
 
         // Should NOT contain rules not selected
         expect(text).not.toContain('GEOSITE,youtube');
