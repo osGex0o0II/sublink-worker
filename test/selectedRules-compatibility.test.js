@@ -16,16 +16,37 @@ describe('selectedRules backward compatibility', () => {
         expect(result).toContain('Non-China');
     });
 
+    it('should accept "domestic" preset name', () => {
+        const result = parseSelectedRules('domestic');
+        expect(result).toEqual(PREDEFINED_RULE_SETS.domestic);
+        expect(result).toEqual(PREDEFINED_RULE_SETS.minimal);
+    });
+
     it('should accept "balanced" preset name', () => {
         const result = parseSelectedRules('balanced');
         expect(result).toEqual(PREDEFINED_RULE_SETS.balanced);
         expect(result.length).toBeGreaterThan(PREDEFINED_RULE_SETS.minimal.length);
+        expect(result).toContain('Apple Push');
+        expect(result).not.toContain('Github');
+    });
+
+    it('should accept "media" preset name', () => {
+        const result = parseSelectedRules('media');
+        expect(result).toEqual(PREDEFINED_RULE_SETS.media);
+        expect(result).toContain('Streaming');
+        expect(result).toContain('Social Media');
     });
 
     it('should accept "comprehensive" preset name', () => {
         const result = parseSelectedRules('comprehensive');
         expect(result).toEqual(PREDEFINED_RULE_SETS.comprehensive);
         expect(result.length).toBeGreaterThanOrEqual(PREDEFINED_RULE_SETS.balanced.length);
+    });
+
+    it('should accept "full" preset name', () => {
+        const result = parseSelectedRules('full');
+        expect(result).toEqual(PREDEFINED_RULE_SETS.full);
+        expect(result).toEqual(PREDEFINED_RULE_SETS.comprehensive);
     });
 
     it('should parse valid JSON array', () => {

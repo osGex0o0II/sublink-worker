@@ -372,6 +372,27 @@ describe('Sing-Box JSON input parsing', () => {
         ))).toBe(true);
     });
 
+    it('should include Apple Push domain rule in balanced preset', async () => {
+        const builder = new SingboxConfigBuilder(
+            sampleSingboxConfig,
+            'balanced',
+            [],
+            null,
+            'zh-CN',
+            null,
+            false
+        );
+
+        const result = await builder.build();
+
+        expect(result.route.rules).toEqual(expect.arrayContaining([
+            expect.objectContaining({
+                domain_suffix: ['push.apple.com'],
+                outbound: '🍏 苹果推送'
+            })
+        ]));
+    });
+
     it('should work with ClashConfigBuilder as well', async () => {
         const builder = new ClashConfigBuilder(
             sampleSingboxConfig,

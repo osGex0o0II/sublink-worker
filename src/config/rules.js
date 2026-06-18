@@ -32,6 +32,14 @@ export const UNIFIED_RULES = [
 		ip_rules: ['google']
 	},
 	{
+		name: 'Apple Push',
+		site_rules: [],
+		ip_rules: [],
+		domain_suffix: [
+			'push.apple.com'
+		]
+	},
+	{
 		name: 'Private',
 		site_rules: [],
 		ip_rules: ['private']
@@ -103,8 +111,11 @@ export const DIRECT_DEFAULT_RULES = new Set(['Private', 'Location:CN']);
 export const REJECT_ACTION_RULES = new Set(['Ad Block']);
 
 export const PREDEFINED_RULE_SETS = {
+	domestic: ['Location:CN', 'Private', 'Non-China'],
+	balanced: ['Location:CN', 'Private', 'Apple Push', 'Non-China', 'Google', 'Youtube', 'AI Services', 'Telegram'],
+	media: ['Location:CN', 'Private', 'Apple Push', 'Non-China', 'Youtube', 'Streaming', 'Social Media', 'Telegram'],
+	full: UNIFIED_RULES.map(rule => rule.name),
 	minimal: ['Location:CN', 'Private', 'Non-China'],
-	balanced: ['Location:CN', 'Private', 'Non-China', 'Github', 'Google', 'Youtube', 'AI Services', 'Telegram'],
 	comprehensive: UNIFIED_RULES.map(rule => rule.name)
 };
 

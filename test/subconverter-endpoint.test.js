@@ -34,7 +34,7 @@ describe('GET /subconverter', () => {
         const res = await app.request('http://localhost/subconverter');
         const text = await res.text();
 
-        // balanced preset includes Google, Youtube, AI Services, Telegram, etc.
+        // balanced preset includes Google, Youtube, AI Services, Telegram, Apple Push, etc.
         PREDEFINED_RULE_SETS.balanced.forEach(ruleName => {
             // Each selected rule should produce at least one ruleset line
             // (either GEOSITE or GEOIP)
@@ -45,6 +45,8 @@ describe('GET /subconverter', () => {
         expect(text).toContain('GEOSITE,google');
         expect(text).toContain('GEOSITE,youtube');
         expect(text).toContain('GEOIP,telegram');
+        expect(text).toContain('DOMAIN-SUFFIX,push.apple.com');
+        expect(text).not.toContain('GEOSITE,github');
     });
 
     it('accepts minimal preset', async () => {
@@ -62,6 +64,28 @@ describe('GET /subconverter', () => {
         expect(text).not.toContain('GEOSITE,youtube');
     });
 
+    it('accepts domestic preset', async () => {
+        const app = createTestApp();
+        const res = await app.request('http://localhost/subconverter?selectedRules=domestic');
+        const text = await res.text();
+
+        expect(text).toContain('GEOSITE,geolocation-cn');
+        expect(text).toContain('GEOIP,private');
+        expect(text).toContain('GEOSITE,geolocation-!cn');
+        expect(text).not.toContain('DOMAIN-SUFFIX,push.apple.com');
+    });
+
+    it('accepts media preset', async () => {
+        const app = createTestApp();
+        const res = await app.request('http://localhost/subconverter?selectedRules=media');
+        const text = await res.text();
+
+        expect(text).toContain('DOMAIN-SUFFIX,push.apple.com');
+        expect(text).toContain('GEOSITE,youtube');
+        expect(text).toContain('GEOSITE,netflix');
+        expect(text).toContain('GEOSITE,twitter');
+    });
+
     it('accepts comprehensive preset', async () => {
         const app = createTestApp();
         const res = await app.request('http://localhost/subconverter?selectedRules=comprehensive');
@@ -76,6 +100,16 @@ describe('GET /subconverter', () => {
         expect(text).toContain('GEOSITE,netflix');
         expect(text).toContain('GEOSITE,steam');
         expect(text).toContain('GEOIP,telegram');
+    });
+
+    it('accepts full preset', async () => {
+        const app = createTestApp();
+        const res = await app.request('http://localhost/subconverter?selectedRules=full');
+        const text = await res.text();
+
+        expect(text).toContain('GEOSITE,category-ads-all');
+        expect(text).toContain('DOMAIN-SUFFIX,push.apple.com');
+        expect(text).toContain('GEOSITE,apple');
     });
 
     it('accepts JSON array for selectedRules', async () => {
