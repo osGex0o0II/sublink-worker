@@ -107,7 +107,7 @@ export const UNIFIED_RULES = [
 ];
 
 // Rule names that should default to DIRECT instead of Node Select
-export const BASE_RULES = ['Private', 'Location:CN'];
+export const BASE_RULES = ['Private', 'Location:CN', 'Github'];
 export const AI_AUTO_TEST_URL = 'https://api.openai.com/v1/models';
 export const AI_AUTO_RULES = new Set(['AI Services']);
 export const DIRECT_DEFAULT_RULES = new Set(['Private', 'Location:CN']);
@@ -115,7 +115,7 @@ export const REJECT_ACTION_RULES = new Set(['Ad Block']);
 
 export const PREDEFINED_RULE_SETS = {
 	domestic: ['Non-China'],
-	balanced: ['Ad Block', 'Apple Push', 'AI Services', 'Github', 'Google', 'Youtube', 'Telegram', 'Non-China'],
+	balanced: ['Ad Block', 'Apple Push', 'AI Services', 'Google', 'Youtube', 'Telegram', 'Non-China'],
 	media: ['Ad Block', 'Apple Push', 'Youtube', 'Streaming', 'Social Media', 'Telegram', 'Non-China'],
 	full: UNIFIED_RULES.map(rule => rule.name),
 	minimal: ['Non-China'],

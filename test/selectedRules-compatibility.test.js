@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { PREDEFINED_RULE_SETS } from '../src/config/index.js';
+import { BASE_RULES, PREDEFINED_RULE_SETS } from '../src/config/index.js';
 import { parseSelectedRules } from '../src/app/createApp.jsx';
 
 /**
@@ -8,6 +8,11 @@ import { parseSelectedRules } from '../src/app/createApp.jsx';
  */
 
 describe('selectedRules backward compatibility', () => {
+    it('should keep mandatory routing rules out of presets', () => {
+        expect(BASE_RULES).toEqual(expect.arrayContaining(['Private', 'Location:CN', 'Github']));
+        expect(PREDEFINED_RULE_SETS.balanced).not.toContain('Github');
+    });
+
     it('should accept "minimal" preset name', () => {
         const result = parseSelectedRules('minimal');
         expect(result).toEqual(PREDEFINED_RULE_SETS.minimal);
@@ -25,7 +30,7 @@ describe('selectedRules backward compatibility', () => {
         expect(result).toEqual(PREDEFINED_RULE_SETS.balanced);
         expect(result.length).toBeGreaterThan(PREDEFINED_RULE_SETS.minimal.length);
         expect(result).toContain('Apple Push');
-        expect(result).toContain('Github');
+        expect(result).not.toContain('Github');
     });
 
     it('should accept "media" preset name', () => {
