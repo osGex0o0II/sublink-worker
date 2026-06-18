@@ -36,7 +36,7 @@ export const TextareaWithActions = (props) => {
   }
 
   const classNames = [
-    'w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 resize-y placeholder-gray-400 dark:placeholder-gray-500',
+    'w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 resize-y placeholder-gray-400 dark:placeholder-gray-500',
     variant === 'mono' ? 'font-mono text-sm bg-gray-50 dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-900',
     textareaClass
   ]

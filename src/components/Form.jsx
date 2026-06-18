@@ -7,11 +7,49 @@ import { ValidatedTextarea } from './ValidatedTextarea.jsx';
 import { formLogicFn } from './formLogic.js';
 
 const LINK_FIELDS = [
-  { key: 'xray', labelKey: 'xrayLink' },
-  { key: 'singbox', labelKey: 'singboxLink' },
-  { key: 'clash', labelKey: 'clashLink' },
-  { key: 'surge', labelKey: 'surgeLink' }
+  { key: 'singbox', labelKey: 'singboxLink', short: 'SB' },
+  { key: 'clash', labelKey: 'clashLink', short: 'CL' },
+  { key: 'xray', labelKey: 'xrayLink', short: 'XR' },
+  { key: 'surge', labelKey: 'surgeLink', short: 'SG' }
 ];
+
+const AdvancedSection = ({ id, title, icon, children }) => (
+  <section class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <button
+      type="button"
+      x-on:click={`toggleAccordion('${id}')`}
+      x-bind:aria-expanded={`accordionSections.${id}.toString()`}
+      aria-controls={`advanced-${id}`}
+      class="w-full px-4 py-3.5 flex items-center justify-between gap-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+    >
+      <span class="font-semibold text-sm text-gray-900 dark:text-white flex items-center gap-2">
+        <i class={`${icon} text-gray-400 w-5 text-center`}></i>
+        {title}
+      </span>
+      <span
+        class="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 transition-transform duration-200"
+        x-bind:class={`{'rotate-180': accordionSections.${id}}`}
+      >
+        <i class="fas fa-chevron-down text-sm"></i>
+      </span>
+    </button>
+    <div
+      id={`advanced-${id}`}
+      x-show={`accordionSections.${id}`}
+      {...{
+        'x-transition:enter': 'transition ease-out duration-200',
+        'x-transition:enter-start': 'opacity-0 -translate-y-2',
+        'x-transition:enter-end': 'opacity-100 translate-y-0',
+        'x-transition:leave': 'transition ease-in duration-150',
+        'x-transition:leave-start': 'opacity-100 translate-y-0',
+        'x-transition:leave-end': 'opacity-0 -translate-y-2'
+      }}
+      class="px-5 pb-5"
+    >
+      {children}
+    </div>
+  </section>
+);
 
 export const Form = (props) => {
   const { t, lang } = props;
@@ -46,11 +84,11 @@ export const Form = (props) => {
   `;
 
   return (
-    <div x-data="formData()" x-init="init()" class="max-w-4xl mx-auto">
+    <div x-data="formData()" x-init="init()" class="max-w-4xl mx-auto pb-24 sm:pb-0">
       <form {...{'x-on:submit.prevent': 'submitForm'}} class="space-y-8">
 
       {/* Input Section */}
-      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-all duration-300 hover:shadow-md group">
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5 transition-all duration-200 group">
         <TextareaWithActions
           id="input"
           name="input"
@@ -96,40 +134,33 @@ export const Form = (props) => {
       </div>
 
       {/* Advanced Options Toggle */}
-      <div 
-        class="flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors" 
+      <button
+        type="button"
+        class="w-full flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl p-3.5 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors text-left" 
         x-on:click="showAdvanced = !showAdvanced"
-        role="button"
-        tabindex="0"
-        {...{
-          'x-on:keydown.enter.prevent': 'showAdvanced = !showAdvanced',
-          'x-on:keydown.space.prevent': 'showAdvanced = !showAdvanced'
-        }}
+        x-bind:aria-expanded="showAdvanced.toString()"
+        aria-controls="advanced-options"
       >
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 flex items-center justify-center">
+          <div class="w-9 h-9 rounded-lg bg-gray-50 dark:bg-gray-700 text-primary-600 dark:text-primary-400 flex items-center justify-center">
             <i class="fas fa-sliders-h"></i>
           </div>
-          <span class="font-semibold text-gray-900 dark:text-white">{t('advancedOptions')}</span>
+          <span class="font-semibold text-sm text-gray-900 dark:text-white">{t('advancedOptions')}</span>
         </div>
         <div 
-          class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 transition-transform duration-300" 
+          class="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 transition-transform duration-300" 
           x-bind:class="{'rotate-180': showAdvanced}"
         >
           <i class="fas fa-chevron-down"></i>
         </div>
-      </div>
+      </button>
 
   {/* Advanced Options Content */ }
-  <div x-show="showAdvanced" {...{'x-transition:enter': 'transition ease-out duration-300', 'x-transition:enter-start': 'opacity-0 transform -translate-y-4', 'x-transition:enter-end': 'opacity-100 transform translate-y-0', 'x-transition:leave': 'transition ease-in duration-200', 'x-transition:leave-start': 'opacity-100 transform translate-y-0', 'x-transition:leave-end': 'opacity-0 transform -translate-y-4'}} class="space-y-6">
+  <div id="advanced-options" x-show="showAdvanced" {...{'x-transition:enter': 'transition ease-out duration-300', 'x-transition:enter-start': 'opacity-0 transform -translate-y-4', 'x-transition:enter-end': 'opacity-100 transform translate-y-0', 'x-transition:leave': 'transition ease-in duration-200', 'x-transition:leave-start': 'opacity-100 transform translate-y-0', 'x-transition:leave-end': 'opacity-0 transform -translate-y-4'}} class="space-y-4">
 
     {/* Rule Selection */ }
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <i class="fas fa-filter text-gray-400"></i>
-          {t('ruleSelection')}
-        </h3>
+    <AdvancedSection id="rules" title={t('ruleSelection')} icon="fas fa-filter">
+      <div class="flex items-center justify-end mb-4">
         <select x-model="selectedPredefinedRule" x-on:change="applyPredefinedRule()" class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
         <option value="custom">{t('custom')}</option>
         <option value="minimal">{t('minimal')}</option>
@@ -138,35 +169,32 @@ export const Form = (props) => {
       </select>
           </div>
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+  <div class="flex flex-wrap gap-2">
     {UNIFIED_RULES.map((rule) => (
-      <label class="flex items-center p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors group">
+      <label class="flex items-center px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 hover:bg-primary-50 dark:hover:bg-primary-900/20 cursor-pointer transition-colors group">
         <input
           type="checkbox"
           value={rule.name}
           x-model="selectedRules" 
                     x-on:change="selectedPredefinedRule = 'custom'"
-        class="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600"
+        class="w-3.5 h-3.5 text-primary-600 rounded border-gray-300 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600"
                   />
-        <span class="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
+        <span class="ml-2 text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 group-hover:text-primary-700 dark:group-hover:text-primary-300 transition-colors">
           {t(`outboundNames.${rule.name}`)}
         </span>
       </label>
     ))}
   </div>
 
-          </div>
+    </AdvancedSection>
 
   {/* Custom Rules Component */ }
-  <CustomRules t={t} />
+  <AdvancedSection id="customRules" title={t('customRulesSection')} icon="fas fa-stream">
+    <CustomRules t={t} framed={false} />
+  </AdvancedSection>
 
     {/* General Options */ }
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <i class="fas fa-cog text-gray-400"></i>
-              {t('generalSettings')}
-            </h3>
-            
+    <AdvancedSection id="general" title={t('generalSettings')} icon="fas fa-cog">
             <div class="space-y-4">
               <label class="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-700/30 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors cursor-pointer">
                 <span class="font-medium text-gray-700 dark:text-gray-300">{t('groupByCountry')}</span>
@@ -214,14 +242,10 @@ export const Form = (props) => {
                 </div>
               </div>
           </div>
-          </div>
+    </AdvancedSection>
 
   {/* Subconverter External Config */}
-  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-    <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-2">
-      <i class="fas fa-file-export text-gray-400"></i>
-      {t('subconverterConfigTitle')}
-    </h3>
+  <AdvancedSection id="subconverter" title={t('subconverterConfigTitle')} icon="fas fa-file-export">
     <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">{t('subconverterConfigDesc')}</p>
     <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
       <p class="font-mono text-sm text-gray-600 dark:text-gray-400 break-all" x-text="getSubconverterUrl()"></p>
@@ -237,15 +261,12 @@ export const Form = (props) => {
         <span x-text={`subconverterCopied ? '${t('copiedSubconverterUrl')}' : '${t('copySubconverterUrl')}'`}></span>
       </button>
     </div>
-  </div>
+  </AdvancedSection>
 
   {/* Base Config */ }
-  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+  <AdvancedSection id="baseConfig" title={t('baseConfigSettings')} icon="fas fa-file-code">
             <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <i class="fas fa-file-code text-gray-400"></i>
-                {t('baseConfigSettings')}
-              </h3>
+              <span></span>
               <select x-model="configType" class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
                 <option value="singbox">SingBox (JSON)</option>
                 <option value="clash">Clash (YAML)</option>
@@ -302,28 +323,24 @@ export const Form = (props) => {
   { t('clearConfig') }
               </button>
           </div>
-          </div >
+  </AdvancedSection>
 
   {/* User Agent */ }
-  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <i class="fas fa-user-secret text-gray-400"></i>
-              {t('UASettings')}
-            </h3>
+  <AdvancedSection id="ua" title={t('UASettings')} icon="fas fa-user-secret">
             <input 
               type="text" 
               x-model="customUA" 
               class="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent" 
               placeholder="curl/7.74.0" 
             />
-          </div>
+  </AdvancedSection>
         </div>
 
   {/* Action Buttons */ }
-  <div class="flex flex-col sm:flex-row gap-4">
+  <div class="hidden sm:flex sm:flex-row gap-4">
           <button 
             type="submit" 
-            class="flex-1 py-3.5 px-6 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 text-white rounded-xl font-bold shadow-lg shadow-primary-500/30 hover:shadow-primary-500/40 transform hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2"
+            class="flex-1 py-3 px-6 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-bold shadow-sm shadow-primary-500/20 transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
             x-bind:disabled="loading"
           >
             <i class="fas fa-sync-alt" x-bind:class="loading ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
@@ -333,44 +350,65 @@ export const Form = (props) => {
   <button
     type="button" 
             x-on:click="clearAll()"
-class="px-6 py-3.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 flex items-center justify-center gap-2 shadow-sm"
+class="px-6 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 flex items-center justify-center gap-2"
   >
   <i class="fas fa-trash-alt"></i>
 { t('clear') }
           </button>
         </div>
+
+  <div class="sm:hidden fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur px-4 py-3">
+    <div class="flex gap-3 max-w-4xl mx-auto">
+      <button
+        type="submit"
+        class="flex-1 py-3 px-4 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-bold shadow-sm shadow-primary-500/20 transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+        x-bind:disabled="loading"
+      >
+        <i class="fas fa-sync-alt" x-bind:class="loading ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+        <span x-text="loading ? processingText : convertText">{t('convert')}</span>
+      </button>
+      <button
+        type="button"
+        x-on:click="clearAll()"
+        class="w-12 h-12 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center shadow-sm"
+        title={t('clear')}
+        aria-label={t('clear')}
+      >
+        <i class="fas fa-trash-alt"></i>
+      </button>
+    </div>
+  </div>
       </form>
 
   {/* Results Section */ }
-  <div x-cloak x-show="generatedLinks" x-data="{ copied: null }" {...{'x-transition:enter': 'transition ease-out duration-500', 'x-transition:enter-start': 'opacity-0 transform translate-y-8', 'x-transition:enter-end': 'opacity-100 transform translate-y-0'}} class="mt-12">
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8 transition-all duration-300 hover:shadow-md">
+  <div x-cloak x-show="generatedLinks" x-data="{ copied: null }" {...{'x-transition:enter': 'transition ease-out duration-500', 'x-transition:enter-start': 'opacity-0 transform translate-y-8', 'x-transition:enter-end': 'opacity-100 transform translate-y-0'}} class="mt-8">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5 mb-8">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          <span class="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 flex items-center justify-center">
+        <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <span class="w-8 h-8 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 flex items-center justify-center">
             <i class="fas fa-link text-sm"></i>
           </span>
           {t('subscriptionLinks')}
         </h2>
       </div>
 
-      <div class="mt-6 space-y-4">
+      <div class="space-y-2">
         {LINK_FIELDS.map((field) => (
-          <div class="relative group" key={field.key}>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t(field.labelKey)}
-            </label>
-            <div class="flex gap-2">
-              <input
-                type="text"
-                readonly
-                x-bind:value={`shortenedLinks ? shortenedLinks?.${field.key} : generatedLinks?.${field.key}`}
-                class="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:border-transparent transition-all duration-200 font-mono text-sm"
-                x-bind:class="shortenedLinks ? 'text-primary-600 dark:text-primary-400 font-semibold focus:ring-primary-500' : 'text-gray-600 dark:text-gray-400 focus:ring-green-500'"
-              />
+          <div class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50" key={field.key}>
+            <div class="w-9 h-9 rounded-lg bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 flex items-center justify-center text-xs font-bold shrink-0">
+              {field.short}
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-bold text-gray-900 dark:text-white">{t(field.labelKey)}</div>
+              <p
+                class="mt-0.5 font-mono text-xs text-gray-500 dark:text-gray-400 truncate"
+                x-text={`shortenedLinks ? shortenedLinks?.${field.key} : generatedLinks?.${field.key}`}
+              ></p>
+            </div>
               <button
                 type="button"
                 x-on:click={`navigator.clipboard.writeText((shortenedLinks || generatedLinks)?.${field.key}); copied = '${field.key}'; setTimeout(() => copied = null, 2000)`}
-                class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                class="w-9 h-9 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-lg transition-colors duration-200 flex items-center justify-center shrink-0"
                 x-bind:class={`{
                   'hover:bg-green-100 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400': !shortenedLinks,
                   'hover:bg-primary-100 dark:hover:bg-primary-900/30 hover:text-primary-600 dark:hover:text-primary-400': shortenedLinks,
@@ -380,7 +418,6 @@ class="px-6 py-3.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 bo
               >
                 <i class="fas" x-bind:class={`copied === '${field.key}' ? 'fa-check' : 'fa-copy'`}></i>
               </button>
-            </div>
           </div>
         ))}
       </div>
@@ -405,10 +442,10 @@ class="px-6 py-3.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 bo
             type="button"
             x-on:click="shortenedLinks ? shortenedLinks = null : shortenLinks()"
             x-bind:disabled="!shortenedLinks && shortening"
-            class="px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center gap-2 shadow-lg"
+            class="px-6 py-3 rounded-xl font-semibold transition-colors duration-200 flex items-center gap-2 shadow-sm"
             x-bind:class="shortenedLinks
               ? 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm'
-              : 'bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 text-white shadow-primary-500/30 hover:shadow-primary-500/40 disabled:opacity-50 disabled:cursor-not-allowed'"
+              : 'bg-primary-600 hover:bg-primary-700 text-white shadow-primary-500/20 disabled:opacity-50 disabled:cursor-not-allowed'"
           >
             <i
               class="fas"

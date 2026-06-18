@@ -16,7 +16,6 @@ export const Layout = (props) => {
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
-        <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
         <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.10/dist/cdn.min.js" onerror="window.__alpineFailed=true"></script>
         <script>
@@ -69,36 +68,29 @@ export const Layout = (props) => {
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
             position: relative;
             min-height: 100vh;
+            background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(246,248,251,0.98));
           }
 
-          /* Subtle radial gradient background */
           body::before {
             content: '';
             position: fixed;
             inset: 0;
             z-index: -2;
-            background:
-              radial-gradient(ellipse 80% 50% at 50% -20%, rgba(10, 163, 235, 0.08) 0%, transparent 60%),
-              radial-gradient(ellipse 60% 40% at 90% 80%, rgba(51, 197, 255, 0.05) 0%, transparent 50%),
-              radial-gradient(ellipse 50% 30% at 10% 90%, rgba(0, 130, 202, 0.04) 0%, transparent 50%);
+            background: linear-gradient(180deg, rgba(241,245,249,0.55), transparent 42%);
             pointer-events: none;
           }
 
           .dark body::before,
           html.dark body::before {
-            background:
-              radial-gradient(ellipse 80% 50% at 50% -20%, rgba(10, 163, 235, 0.12) 0%, transparent 60%),
-              radial-gradient(ellipse 60% 40% at 90% 80%, rgba(51, 197, 255, 0.06) 0%, transparent 50%),
-              radial-gradient(ellipse 50% 30% at 10% 90%, rgba(0, 130, 202, 0.05) 0%, transparent 50%);
+            background: linear-gradient(180deg, rgba(15,23,42,0.35), transparent 42%);
           }
 
-          /* Subtle noise texture overlay */
           body::after {
             content: '';
             position: fixed;
             inset: 0;
             z-index: -1;
-            opacity: 0.3;
+            opacity: 0.14;
             pointer-events: none;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
             background-repeat: repeat;
@@ -107,10 +99,15 @@ export const Layout = (props) => {
 
           .dark body::after,
           html.dark body::after {
-            opacity: 0.15;
+            opacity: 0.08;
           }
 
           [x-cloak] { display: none !important; }
+
+          :where(a, button, input, textarea, select):focus-visible {
+            outline: 2px solid rgba(0, 130, 202, 0.72);
+            outline-offset: 2px;
+          }
         </style>
         <script>
           function appData() {

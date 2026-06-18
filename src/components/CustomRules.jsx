@@ -4,17 +4,21 @@
 import { ValidatedTextarea } from './ValidatedTextarea.jsx';
 
 export const CustomRules = (props) => {
-    const { t } = props;
+    const { t, framed = true } = props;
+    const containerClass = framed
+        ? 'bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6'
+        : '';
 
     return (
-        <div x-data="customRulesData()" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                    <i class="fas fa-stream text-gray-400"></i>
-                    {t('customRulesSection')}
-                </h3>
-            </div>
-
+        <div x-data="customRulesData()" class={containerClass}>
+            {framed && (
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                        <i class="fas fa-stream text-gray-400"></i>
+                        {t('customRulesSection')}
+                    </h3>
+                </div>
+            )}
             <div class="flex flex-col sm:flex-row justify-between items-end sm:items-center mb-6 gap-4">
                 <p class="text-sm text-gray-500 dark:text-gray-400">{t('customRulesSectionTooltip')}</p>
 

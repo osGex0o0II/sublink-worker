@@ -77,6 +77,7 @@ export const formLogicFn = (t) => {
                 rules: true,        // 规则选择 - 默认展开
                 customRules: false, // 自定义规则
                 general: false,     // 通用设置
+                subconverter: false,
                 baseConfig: false,  // 基础配置
                 ua: false          // User Agent
             },
