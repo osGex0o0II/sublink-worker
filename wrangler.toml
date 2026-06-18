@@ -10,3 +10,4 @@ kv_namespaces = [
 
 [assets]
 directory = "./public"
+binding = "ASSETS"

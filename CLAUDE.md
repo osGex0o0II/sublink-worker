@@ -13,37 +13,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概览
 
-Sublink Worker 是多平台代理订阅转换器：将各类协议（ShadowSocks/VMess/VLESS/Hysteria2/Trojan/TUIC）转为客户端配置（Sing-Box/Clash/Xray/Surge）。同一份代码跑在 Cloudflare Workers / Node.js / Vercel / Docker 上。技术栈：Hono（Web/JSX SSR）+ Vitest + Wrangler + esbuild + ioredis。
+Sublink Worker 是运行在 Cloudflare Workers 上的代理订阅转换器：将各类协议（ShadowSocks/VMess/VLESS/Hysteria2/Trojan/TUIC）转为客户端配置（Sing-Box/Clash/Xray/Surge）。技术栈：Hono（Web/JSX SSR）+ Vitest + Wrangler。
 
 ## 常用命令
 
 - `npm run dev` — Wrangler 本地开发（Cloudflare Workers 入口）
-- `npm run dev:node` — esbuild bundle + 启动 Node.js server（Docker 同此入口）
 - `npm test` — Vitest（基于 `@cloudflare/vitest-pool-workers`，依赖 `wrangler.toml`）
 - `npx vitest test/<file>.test.js` — 跑单个测试文件
-- `npm run build` — Vercel 构建（输出到 `dist/vercel/`）
 - `npm run deploy` — `setup-kv` + `wrangler deploy`
 
 无 ESLint/Prettier/Biome 配置，未启用自动格式化。
 
-## 多运行时架构
+## Cloudflare Workers 架构
 
-入口分平台：`src/worker.jsx`（Cloudflare）、`src/platforms/node-server.js`（Node/Docker）、`api/index.js`（Vercel）。三者都通过 `createApp(runtime)`（`src/app/createApp.jsx`）创建同一个 Hono app。
+入口：`src/worker.jsx` 通过 `createCloudflareRuntime(env)` 创建运行时，再通过 `createApp(runtime)`（`src/app/createApp.jsx`）创建 Hono app。
 
-- `src/runtime/{cloudflare,node,vercel}.js` 提供平台适配
+- `src/runtime/cloudflare.js` 提供 Cloudflare KV 与 Assets 绑定适配
 - `src/runtime/runtimeConfig.js` 规范化 KV、资源获取、日志、环境变量默认值
-
-新增运行时：在 `src/runtime/` 加 adapter，按需在 `src/adapters/kv/` 加 KV 实现，按需在 `src/platforms/` 加入口。
 
 ## KV 存储抽象
 
-统一接口：`get(key)`、`put(key, value, options)`、`delete(key)`。实现：`CloudflareKVAdapter`、`RedisKVAdapter`（ioredis）、`UpstashKVAdapter`（REST）、`MemoryKVAdapter`。
+统一接口：`get(key)`、`put(key, value, options)`、`delete(key)`。实现：`CloudflareKVAdapter`、`MemoryKVAdapter`。
 
 - 服务层：`ShortLinkService`（短链）、`ConfigStorageService`（base config 存储，默认 30 天 TTL）
-- Node/Vercel 优先级：Redis > Upstash/Vercel KV > 内存兜底；`DISABLE_MEMORY_KV=true` 关闭兜底
 - Cloudflare 用 `wrangler.toml` 的 `SUBLINK_KV` 与 `ASSETS` binding
 
-环境变量：`REDIS_URL` / `REDIS_HOST`+`REDIS_PORT` / `REDIS_USERNAME` / `REDIS_PASSWORD` / `REDIS_TLS` / `REDIS_KEY_PREFIX`、`KV_REST_API_URL`+`KV_REST_API_TOKEN`、`CONFIG_TTL_SECONDS`、`SHORT_LINK_TTL_SECONDS`、`STATIC_DIR`、`PORT`。
+部署前用 `npm run setup-kv` 检查或创建 `SUBLINK_KV` 命名空间。
 
 ## 协议解析与配置构建
 
