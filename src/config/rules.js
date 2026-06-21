@@ -99,7 +99,7 @@ export const DIRECT_DEFAULT_RULES = new Set(['Private', 'Location:CN']);
 export const REJECT_ACTION_RULES = new Set(['Ad Block']);
 
 export const PREDEFINED_RULE_SETS = {
-	domestic: ['Non-China'],
+	domestic: ['AI Services', 'Non-China'],
 	balanced: ['Ad Block', 'AI Services', 'Google', 'Youtube', 'Telegram', 'Non-China'],
 	media: ['Ad Block', 'Youtube', 'Streaming', 'Social Media', 'Telegram', 'Non-China'],
 	full: UNIFIED_RULES.map(rule => rule.name),

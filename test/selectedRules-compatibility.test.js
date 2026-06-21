@@ -35,7 +35,7 @@ describe('selectedRules backward compatibility', () => {
     it('should accept "domestic" preset name', () => {
         const result = parseSelectedRules('domestic');
         expect(result).toEqual(PREDEFINED_RULE_SETS.domestic);
-        expect(result).toEqual(PREDEFINED_RULE_SETS.minimal);
+        expect(result).toEqual(['AI Services', 'Non-China']);
     });
 
     it('should accept "balanced" preset name', () => {

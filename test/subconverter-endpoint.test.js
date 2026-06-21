@@ -56,7 +56,7 @@ describe('GET /subconverter', () => {
         const res = await app.request('http://localhost/subconverter?selectedRules=minimal');
         const text = await res.text();
 
-        // minimal/domestic only selects Non-China; Private and Location:CN are base rules.
+        // minimal only selects Non-China; mandatory rules are always included.
         expect(text).toContain('GEOSITE,geolocation-cn');
         expect(text).toContain('GEOIP,private');
         expect(text).toContain('GEOSITE,geolocation-!cn');
@@ -76,6 +76,8 @@ describe('GET /subconverter', () => {
         expect(text).toContain('GEOIP,private');
         expect(text).toContain('GEOSITE,geolocation-!cn');
         expect(text).toContain('DOMAIN-SUFFIX,push.apple.com');
+        expect(text).toContain('GEOSITE,category-ai-!cn');
+        expect(text).toContain('custom_proxy_group=🤖 AI 自动选择`url-test`.*`https://api.openai.com/v1/models`300,,50');
     });
 
     it('accepts media preset', async () => {

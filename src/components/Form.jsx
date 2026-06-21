@@ -165,10 +165,7 @@ export const Form = (props) => {
       <div class="flex items-center justify-between gap-3 mb-4">
         <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{t('rulePreset')}</span>
         <select x-model="selectedPredefinedRule" x-on:change="applyPredefinedRule()" class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-        <option value="balanced">{t('balanced')}</option>
         <option value="domestic">{t('domestic')}</option>
-        <option value="media">{t('media')}</option>
-        <option value="full">{t('full')}</option>
         <option value="custom">{t('custom')}</option>
       </select>
           </div>
