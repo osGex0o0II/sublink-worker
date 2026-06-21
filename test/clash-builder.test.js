@@ -87,7 +87,7 @@ proxies:
     expect(grp.proxies).toContain('node-from-provider');
   });
 
-  it('should default Private and Location:CN groups to DIRECT', async () => {
+  it('should route transparent rules without creating extra groups', async () => {
     const input = `
 ss://YWVzLTEyOC1nY206dGVzdA@example.com:443#HK-Node-1
 ss://YWVzLTEyOC1nY206dGVzdA@example.com:444#US-Node-1
@@ -97,18 +97,16 @@ ss://YWVzLTEyOC1nY206dGVzdA@example.com:444#US-Node-1
     const yamlText = await builder.build();
     const built = yaml.load(yamlText);
 
-    const privateName = t('outboundNames.Private');
-    const cnName = t('outboundNames.Location:CN');
+    const groupNames = (built['proxy-groups'] || []).map(g => g.name);
 
-    const privateGroup = (built['proxy-groups'] || []).find(g => g && g.name === privateName);
-    const cnGroup = (built['proxy-groups'] || []).find(g => g && g.name === cnName);
-
-    expect(privateGroup).toBeDefined();
-    expect(cnGroup).toBeDefined();
-
-    // DIRECT should be the first option (default selected)
-    expect(privateGroup.proxies[0]).toBe('DIRECT');
-    expect(cnGroup.proxies[0]).toBe('DIRECT');
+    expect(groupNames).not.toContain(t('outboundNames.Private'));
+    expect(groupNames).not.toContain(t('outboundNames.Location:CN'));
+    expect(built.rules).toEqual(expect.arrayContaining([
+      'RULE-SET,private-ip,DIRECT,no-resolve',
+      'RULE-SET,cn,DIRECT',
+      'RULE-SET,cn-ip,DIRECT,no-resolve',
+      `RULE-SET,geolocation-!cn,${t('outboundNames.Node Select')}`
+    ]));
 
     // Other groups should NOT default to DIRECT
     const fallbackName = t('outboundNames.Fall Back');

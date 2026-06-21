@@ -388,12 +388,13 @@ describe('Sing-Box JSON input parsing', () => {
         expect(result.route.rules).toEqual(expect.arrayContaining([
             expect.objectContaining({
                 domain_suffix: ['push.apple.com'],
-                outbound: '🍏 苹果推送'
+                outbound: '🚀 节点选择'
             })
         ]));
         expect(result.route.rules).toEqual(expect.arrayContaining([
-            expect.objectContaining({ rule_set: ['private-ip'], outbound: '🏠 私有网络' }),
-            expect.objectContaining({ rule_set: ['github', 'gitlab'], outbound: '🐱 Github' }),
+            expect.objectContaining({ rule_set: ['private-ip'], outbound: 'DIRECT' }),
+            expect.objectContaining({ rule_set: ['github', 'gitlab'], outbound: '🚀 节点选择' }),
+            expect.objectContaining({ rule_set: ['geolocation-!cn'], outbound: '🚀 节点选择' }),
             expect.objectContaining({ rule_set: ['category-ai-!cn'], outbound: '💬 AI 服务' })
         ]));
         expect(result.outbounds).toEqual(expect.arrayContaining([
@@ -423,13 +424,10 @@ describe('Sing-Box JSON input parsing', () => {
 
         const result = await builder.build();
 
-        expect(result.route.rules.some(rule => (
-            rule.outbound === '🔒 国内服务'
-            && Array.isArray(rule.rule_set)
-            && rule.rule_set.includes('cn')
-        ))).toBe(true);
         expect(result.route.rules).toEqual(expect.arrayContaining([
-            expect.objectContaining({ rule_set: ['private-ip'], outbound: '🏠 私有网络' }),
+            expect.objectContaining({ rule_set: ['geolocation-cn', 'cn'], outbound: 'DIRECT' }),
+            expect.objectContaining({ rule_set: ['private-ip'], outbound: 'DIRECT' }),
+            expect.objectContaining({ rule_set: ['cn-ip'], outbound: 'DIRECT' }),
             expect.objectContaining({ rule_set: ['google'], outbound: '🔍 谷歌服务' })
         ]));
     });

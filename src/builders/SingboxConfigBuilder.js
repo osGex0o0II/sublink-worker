@@ -1,5 +1,5 @@
 
-import { SING_BOX_CONFIG, generateRuleSets, generateRules, getOutbounds, PREDEFINED_RULE_SETS, AI_AUTO_RULES, AI_AUTO_TEST_URL, DIRECT_DEFAULT_RULES, REJECT_ACTION_RULES, SITE_RULE_SET_BASE_URL, IP_RULE_SET_BASE_URL, SITE_RULE_SETS, IP_RULE_SETS } from '../config/index.js';
+import { SING_BOX_CONFIG, generateRuleSets, generateRules, getOutbounds, PREDEFINED_RULE_SETS, AI_AUTO_RULES, AI_AUTO_TEST_URL, DIRECT_DEFAULT_RULES, NODE_SELECT_DEFAULT_RULES, REJECT_ACTION_RULES, SITE_RULE_SET_BASE_URL, IP_RULE_SET_BASE_URL, SITE_RULE_SETS, IP_RULE_SETS, TRANSPARENT_RULES } from '../config/index.js';
 import { BaseConfigBuilder } from './BaseConfigBuilder.js';
 import { deepCopy, groupProxiesByCountry } from '../utils.js';
 import { addProxyWithDedup } from './helpers/proxyHelpers.js';
@@ -153,6 +153,7 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
         outbounds.forEach(outbound => {
             if (outbound !== this.t('outboundNames.Node Select')) {
                 if (REJECT_ACTION_RULES.has(outbound)) return;
+                if (TRANSPARENT_RULES.has(outbound)) return;
                 let selectorMembers = this.buildSelectorMembers(proxyList);
                 const tag = this.t(`outboundNames.${outbound}`);
                 if (this.hasOutboundTag(tag)) {
@@ -749,6 +750,12 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
     buildRouteTarget(rule) {
         if (REJECT_ACTION_RULES.has(rule?.outbound) || rule?.outbound === 'REJECT') {
             return { action: 'reject' };
+        }
+        if (DIRECT_DEFAULT_RULES.has(rule?.outbound)) {
+            return { outbound: 'DIRECT' };
+        }
+        if (NODE_SELECT_DEFAULT_RULES.has(rule?.outbound)) {
+            return { outbound: this.t('outboundNames.Node Select') };
         }
         return { outbound: this.t(`outboundNames.${rule.outbound}`) };
     }

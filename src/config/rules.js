@@ -96,6 +96,8 @@ export const BASE_RULES = MANDATORY_RULES;
 export const AI_AUTO_TEST_URL = 'https://api.openai.com/v1/models';
 export const AI_AUTO_RULES = new Set(['AI Services']);
 export const DIRECT_DEFAULT_RULES = new Set(['Private', 'Location:CN']);
+export const NODE_SELECT_DEFAULT_RULES = new Set(['Github', 'Apple Push', 'Non-China']);
+export const TRANSPARENT_RULES = new Set([...DIRECT_DEFAULT_RULES, ...NODE_SELECT_DEFAULT_RULES]);
 export const REJECT_ACTION_RULES = new Set(['Ad Block']);
 
 export const PREDEFINED_RULE_SETS = {

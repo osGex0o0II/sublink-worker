@@ -184,7 +184,7 @@ export const Form = (props) => {
     </div>
   </div>
 
-  <div class="flex flex-wrap gap-2">
+  <div x-show="selectedPredefinedRule === 'custom'" class="flex flex-wrap gap-2">
     {UNIFIED_RULES.filter(rule => !MANDATORY_RULES.includes(rule.name)).map((rule) => (
       <label class="flex items-center px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 hover:bg-primary-50 dark:hover:bg-primary-900/20 cursor-pointer transition-colors group">
         <input

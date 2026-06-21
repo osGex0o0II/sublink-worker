@@ -6,12 +6,16 @@
 import { createTranslator } from '../i18n/index.js';
 import { generateRules } from './ruleGenerators.js';
 import { COUNTRY_DATA } from '../utils.js';
-import { AI_AUTO_RULES, AI_AUTO_TEST_URL, DIRECT_DEFAULT_RULES } from './rules.js';
-
-// Rule names that should default to REJECT
-const REJECT_RULES = new Set(['Ad Block']);
+import { AI_AUTO_RULES, AI_AUTO_TEST_URL, DIRECT_DEFAULT_RULES, NODE_SELECT_DEFAULT_RULES, REJECT_ACTION_RULES, TRANSPARENT_RULES } from './rules.js';
 
 const SPEED_TEST_URL = 'http://www.gstatic.com/generate_204';
+
+function getRuleTarget(rule, t) {
+	if (REJECT_ACTION_RULES.has(rule?.outbound) || rule?.outbound === 'REJECT') return 'REJECT';
+	if (DIRECT_DEFAULT_RULES.has(rule?.outbound)) return 'DIRECT';
+	if (NODE_SELECT_DEFAULT_RULES.has(rule?.outbound)) return t('outboundNames.Node Select');
+	return t(`outboundNames.${rule.outbound}`);
+}
 
 /**
  * Escape special regex characters in a string for use inside subconverter regex
@@ -48,7 +52,7 @@ export function generateSubconverterConfig({ selectedRules = [], customRules = [
 
 	// Source-IP rules first (highest priority, no DNS needed)
 	rules.forEach(rule => {
-		const groupName = t(`outboundNames.${rule.outbound}`);
+		const groupName = getRuleTarget(rule, t);
 
 		if (rule.src_ip_cidr) {
 			rule.src_ip_cidr.forEach(cidr => {
@@ -59,7 +63,7 @@ export function generateSubconverterConfig({ selectedRules = [], customRules = [
 
 	// First pass: domain-type rules (DOMAIN-SUFFIX, DOMAIN-KEYWORD, GEOSITE)
 	rules.forEach(rule => {
-		const groupName = t(`outboundNames.${rule.outbound}`);
+		const groupName = getRuleTarget(rule, t);
 
 		if (rule.domain_suffix) {
 			rule.domain_suffix.forEach(suffix => {
@@ -80,7 +84,7 @@ export function generateSubconverterConfig({ selectedRules = [], customRules = [
 
 	// Second pass: IP-type rules (GEOIP, IP-CIDR)
 	rules.forEach(rule => {
-		const groupName = t(`outboundNames.${rule.outbound}`);
+		const groupName = getRuleTarget(rule, t);
 
 		if (rule.ip_rules) {
 			rule.ip_rules.forEach(ip => {
@@ -166,10 +170,11 @@ export function generateSubconverterConfig({ selectedRules = [], customRules = [
 
 	rules.forEach(rule => {
 		const groupName = t(`outboundNames.${rule.outbound}`);
+		if (TRANSPARENT_RULES.has(rule.outbound)) return;
 		if (processedGroups.has(groupName)) return;
 		processedGroups.add(groupName);
 
-		if (REJECT_RULES.has(rule.outbound)) {
+		if (REJECT_ACTION_RULES.has(rule.outbound)) {
 			lines.push(`custom_proxy_group=${groupName}\`select\`[]REJECT\`[]DIRECT`);
 		} else if (DIRECT_DEFAULT_RULES.has(rule.outbound)) {
 			lines.push(`custom_proxy_group=${groupName}\`select\`[]DIRECT\`[]${nodeSelectName}`);

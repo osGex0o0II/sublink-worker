@@ -154,8 +154,8 @@ describe('GET /subconverter', () => {
         expect(text).toMatch(/custom_proxy_group=.*节点选择.*select/);
         expect(text).toMatch(/custom_proxy_group=.*自动选择.*url-test/);
 
-        // Fall Back group
-        expect(text).toMatch(/custom_proxy_group=.*漏网之鱼.*select/);
+        // Default Proxy group
+        expect(text).toMatch(/custom_proxy_group=.*默认代理.*select/);
 
         // FINAL rule
         expect(text).toContain('[]FINAL');
@@ -171,16 +171,22 @@ describe('GET /subconverter', () => {
         expect(text).toMatch(/custom_proxy_group=.*广告拦截.*select.*\[]REJECT/);
     });
 
-    it('maps Private and Location:CN to DIRECT', async () => {
+    it('routes transparent rules directly to their targets', async () => {
         const app = createTestApp();
-        const rules = JSON.stringify(['Private', 'Location:CN', 'Google']);
+        const rules = JSON.stringify(['Private', 'Location:CN', 'Github', 'Apple Push', 'Non-China', 'Google']);
         const res = await app.request(`http://localhost/subconverter?selectedRules=${encodeURIComponent(rules)}`);
         const text = await res.text();
 
-        // Private group should have DIRECT as first option
-        expect(text).toMatch(/custom_proxy_group=.*私有网络.*select.*\[]DIRECT/);
-        // Location:CN group should have DIRECT as first option
-        expect(text).toMatch(/custom_proxy_group=.*国内服务.*select.*\[]DIRECT/);
+        expect(text).toContain('ruleset=DIRECT,[]GEOIP,private');
+        expect(text).toContain('ruleset=DIRECT,[]GEOSITE,cn');
+        expect(text).toContain('ruleset=🚀 节点选择,[]GEOSITE,github');
+        expect(text).toContain('ruleset=🚀 节点选择,[]DOMAIN-SUFFIX,push.apple.com');
+        expect(text).toContain('ruleset=🚀 节点选择,[]GEOSITE,geolocation-!cn');
+        expect(text).not.toMatch(/custom_proxy_group=.*私有网络.*select/);
+        expect(text).not.toMatch(/custom_proxy_group=.*国内服务.*select/);
+        expect(text).not.toMatch(/custom_proxy_group=.*Github.*select/);
+        expect(text).not.toMatch(/custom_proxy_group=.*苹果推送.*select/);
+        expect(text).not.toMatch(/custom_proxy_group=.*非中国.*select/);
     });
 
     it('maps other rules to Node Select', async () => {
@@ -229,7 +235,7 @@ describe('GET /subconverter', () => {
         // English translations
         expect(text).toContain('Node Select');
         expect(text).toContain('Auto Select');
-        expect(text).toContain('Fall Back');
+        expect(text).toContain('Default Proxy');
     });
 
     describe('group_by_country=true', () => {

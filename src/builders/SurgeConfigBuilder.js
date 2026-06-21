@@ -1,6 +1,6 @@
 import { BaseConfigBuilder } from './BaseConfigBuilder.js';
 import { groupProxiesByCountry } from '../utils.js';
-import { SURGE_CONFIG, SURGE_SITE_RULE_SET_BASEURL, SURGE_IP_RULE_SET_BASEURL, generateRules, getOutbounds, PREDEFINED_RULE_SETS, AI_AUTO_RULES, AI_AUTO_TEST_URL, DIRECT_DEFAULT_RULES } from '../config/index.js';
+import { SURGE_CONFIG, SURGE_SITE_RULE_SET_BASEURL, SURGE_IP_RULE_SET_BASEURL, generateRules, getOutbounds, PREDEFINED_RULE_SETS, AI_AUTO_RULES, AI_AUTO_TEST_URL, DIRECT_DEFAULT_RULES, NODE_SELECT_DEFAULT_RULES, REJECT_ACTION_RULES, TRANSPARENT_RULES } from '../config/index.js';
 import { addProxyWithDedup } from './helpers/proxyHelpers.js';
 import { buildSelectorMembers, buildNodeSelectMembers, buildCustomRuleMembers, uniqueNames } from './helpers/groupBuilder.js';
 
@@ -277,6 +277,7 @@ export class SurgeConfigBuilder extends BaseConfigBuilder {
     addOutboundGroups(outbounds, proxyList) {
         outbounds.forEach(outbound => {
             if (outbound !== this.t('outboundNames.Node Select')) {
+                if (TRANSPARENT_RULES.has(outbound)) return;
                 let options = this.buildAggregatedOptions(proxyList);
                 const name = this.t(`outboundNames.${outbound}`);
                 if (this.hasProxyGroup(name)) {
@@ -308,6 +309,13 @@ export class SurgeConfigBuilder extends BaseConfigBuilder {
                 );
             }
         });
+    }
+
+    getRuleTarget(rule) {
+        if (REJECT_ACTION_RULES.has(rule?.outbound) || rule?.outbound === 'REJECT') return 'REJECT';
+        if (DIRECT_DEFAULT_RULES.has(rule?.outbound)) return 'DIRECT';
+        if (NODE_SELECT_DEFAULT_RULES.has(rule?.outbound)) return this.t('outboundNames.Node Select');
+        return this.t('outboundNames.' + rule.outbound);
     }
 
     addCustomRuleGroups(proxyList) {
@@ -447,9 +455,9 @@ export class SurgeConfigBuilder extends BaseConfigBuilder {
 
                 // Surge supports SRC-IP (single IP). Best-effort: downgrade /32 CIDR to SRC-IP.
                 if (typeof safeValue === 'string' && safeValue.endsWith('/32')) {
-                    finalConfig.push(`SRC-IP,${safeValue.slice(0, -3)},${this.t('outboundNames.' + rule.outbound)}`);
+                    finalConfig.push(`SRC-IP,${safeValue.slice(0, -3)},${this.getRuleTarget(rule)}`);
                 } else if (typeof safeValue === 'string' && !safeValue.includes('/')) {
-                    finalConfig.push(`SRC-IP,${safeValue},${this.t('outboundNames.' + rule.outbound)}`);
+                    finalConfig.push(`SRC-IP,${safeValue},${this.getRuleTarget(rule)}`);
                 } else if (typeof safeValue === 'string' && safeValue.includes('/')) {
                     finalConfig.push(`# SRC-IP-CIDR not supported by Surge, skipped: ${safeValue}`);
                 }
@@ -458,31 +466,31 @@ export class SurgeConfigBuilder extends BaseConfigBuilder {
 
         rules.filter(rule => !!rule.domain_suffix).map(rule => {
             rule.domain_suffix.forEach(suffix => {
-                finalConfig.push(`DOMAIN-SUFFIX,${suffix},${this.t('outboundNames.' + rule.outbound)}`);
+                finalConfig.push(`DOMAIN-SUFFIX,${suffix},${this.getRuleTarget(rule)}`);
             });
         });
 
         rules.filter(rule => !!rule.domain_keyword).map(rule => {
             rule.domain_keyword.forEach(keyword => {
-                finalConfig.push(`DOMAIN-KEYWORD,${keyword},${this.t('outboundNames.' + rule.outbound)}`);
+                finalConfig.push(`DOMAIN-KEYWORD,${keyword},${this.getRuleTarget(rule)}`);
             });
         });
 
         rules.filter(rule => rule.site_rules[0] !== '').map(rule => {
             rule.site_rules.forEach(site => {
-                finalConfig.push(`RULE-SET,${SURGE_SITE_RULE_SET_BASEURL}${site}.conf,${this.t('outboundNames.' + rule.outbound)}`);
+                finalConfig.push(`RULE-SET,${SURGE_SITE_RULE_SET_BASEURL}${site}.conf,${this.getRuleTarget(rule)}`);
             });
         });
 
         rules.filter(rule => rule.ip_rules[0] !== '').map(rule => {
             rule.ip_rules.forEach(ip => {
-                finalConfig.push(`RULE-SET,${SURGE_IP_RULE_SET_BASEURL}${ip}.txt,${this.t('outboundNames.' + rule.outbound)},no-resolve`);
+                finalConfig.push(`RULE-SET,${SURGE_IP_RULE_SET_BASEURL}${ip}.txt,${this.getRuleTarget(rule)},no-resolve`);
             });
         });
 
         rules.filter(rule => !!rule.ip_cidr).map(rule => {
             rule.ip_cidr.forEach(cidr => {
-                finalConfig.push(`IP-CIDR,${cidr},${this.t('outboundNames.' + rule.outbound)},no-resolve`);
+                finalConfig.push(`IP-CIDR,${cidr},${this.getRuleTarget(rule)},no-resolve`);
             });
         });
 
