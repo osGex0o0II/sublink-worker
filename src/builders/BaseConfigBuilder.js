@@ -3,6 +3,7 @@ import { createStableProviderName, deepCopy, tryDecodeSubscriptionLines, decodeB
 import { createTranslator } from '../i18n/index.js';
 import { generateRules, getOutbounds, PREDEFINED_RULE_SETS } from '../config/index.js';
 import { isInformationalProxy } from './helpers/proxyHelpers.js';
+import { isSystemGeneratedGroupName } from './helpers/groupNameUtils.js';
 
 export class BaseConfigBuilder {
     constructor(inputString, baseConfig, lang, userAgent, groupByCountry = false, includeAutoSelect = true) {
@@ -255,7 +256,9 @@ export class BaseConfigBuilder {
         // Store user proxy-groups for later merge (after system groups are created)
         if (Array.isArray(overrides['proxy-groups'])) {
             this.pendingUserProxyGroups = this.pendingUserProxyGroups || [];
-            this.pendingUserProxyGroups.push(...overrides['proxy-groups']);
+            this.pendingUserProxyGroups.push(
+                ...overrides['proxy-groups'].filter(group => !isSystemGeneratedGroupName(group?.name))
+            );
         }
     }
 

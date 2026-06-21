@@ -48,3 +48,35 @@ export function findGroupIndexByName(groups, name) {
     const normName = normalizeGroupName(name);
     return groups.findIndex(g => g && normalizeGroupName(g.name) === normName);
 }
+
+const SYSTEM_GROUP_NAMES = new Set([
+    '节点选择',
+    '🚀 节点选择',
+    'node select',
+    '手动选择',
+    '🖐️ 手动选择',
+    'manual select',
+    'manual switch',
+    '手动切换',
+    '🖐️ 手动切换',
+    '自动选择',
+    '⚡ 自动选择',
+    'auto select',
+    'auto',
+    '漏网之鱼',
+    '🐟 漏网之鱼',
+    'fall back',
+    'fallback',
+    '默认代理',
+    '🌐 默认代理',
+    'ai 自动选择',
+    '🤖 ai 自动选择',
+    'ai auto',
+    '🤖 ai auto'
+]);
+
+export function isSystemGeneratedGroupName(name) {
+    if (typeof name !== 'string') return false;
+    const normalized = normalizeGroupName(name).toLowerCase();
+    return SYSTEM_GROUP_NAMES.has(normalized);
+}

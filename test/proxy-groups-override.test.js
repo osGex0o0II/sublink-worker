@@ -266,8 +266,8 @@ FINAL,DIRECT
     });
 
     describe('Issue #277 - Proxy Group Merge and Validation', () => {
-        it('should merge user proxy-group with same name as system group (⚡ 自动选择)', async () => {
-            // User defines a custom ⚡ 自动选择 with custom settings
+        it('should ignore imported proxy-group with same name as system group (⚡ 自动选择)', async () => {
+            // Imported system-like groups should not override our generated routing template.
             const inputWithDuplicateName = `
 proxies:
   - name: HK-Node
@@ -294,10 +294,11 @@ proxy-groups:
             );
             expect(autoGroups).toHaveLength(1);
 
-            // Should have merged proxies and preserved user's custom settings
+            // Should keep our generated template instead of preserving stale imported settings.
             expect(autoGroups[0].proxies).toContain('HK-Node');
-            expect(autoGroups[0].interval).toBe(600);
-            expect(autoGroups[0].url).toBe('http://custom.test/204');
+            expect(autoGroups[0].interval).toBe(300);
+            expect(autoGroups[0].url).toBe('https://api.openai.com/v1/models');
+            expect(autoGroups[0]['expected-status']).toBe('200-499');
         });
 
         it('should reject empty url-test groups instead of silently filling them', async () => {
