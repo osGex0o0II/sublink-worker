@@ -80,7 +80,8 @@ ss://YWVzLTEyOC1nY206dGVzdA@example.com:444#JP-Node
     const groups = built['proxy-groups'] || [];
     const visibleGroupNames = groups.filter(g => !g.hidden).map(g => g.name);
     const hiddenGroupNames = groups.filter(g => g.hidden).map(g => g.name);
-    const aiAutoGroup = groups.find(g => g.name === '🤖 AI 自动选择');
+    const autoGroup = groups.find(g => g.name === '⚡ 自动选择');
+    const aiGroup = groups.find(g => g.name === '💬 AI 服务');
 
     expect(visibleGroupNames).toEqual(expect.arrayContaining([
       '🖐️ 手动选择',
@@ -89,11 +90,13 @@ ss://YWVzLTEyOC1nY206dGVzdA@example.com:444#JP-Node
     ]));
     expect(hiddenGroupNames).toEqual(expect.arrayContaining([
       '⚡ 自动选择',
-      '🤖 AI 自动选择',
       '🇭🇰 Hong Kong',
       '🇯🇵 Japan'
     ]));
-    expect(aiAutoGroup?.['expected-status']).toBe('200-499');
+    expect(hiddenGroupNames).not.toContain('🤖 AI 自动选择');
+    expect(autoGroup?.url).toBe('https://api.openai.com/v1/models');
+    expect(autoGroup?.['expected-status']).toBe('200-499');
+    expect(aiGroup?.proxies[0]).toBe('⚡ 自动选择');
   });
 
   it('sanitizeClashProxyGroups should not remove provider node references when group uses providers', () => {

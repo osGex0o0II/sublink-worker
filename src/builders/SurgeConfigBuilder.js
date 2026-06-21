@@ -1,6 +1,6 @@
 import { BaseConfigBuilder } from './BaseConfigBuilder.js';
 import { groupProxiesByCountry } from '../utils.js';
-import { SURGE_CONFIG, SURGE_SITE_RULE_SET_BASEURL, SURGE_IP_RULE_SET_BASEURL, generateRules, getOutbounds, PREDEFINED_RULE_SETS, AI_AUTO_RULES, AI_AUTO_TEST_URL, DIRECT_DEFAULT_RULES, NODE_SELECT_DEFAULT_RULES, REJECT_ACTION_RULES, TRANSPARENT_RULES } from '../config/index.js';
+import { SURGE_CONFIG, SURGE_SITE_RULE_SET_BASEURL, SURGE_IP_RULE_SET_BASEURL, generateRules, getOutbounds, PREDEFINED_RULE_SETS, AI_AUTO_TEST_URL, DIRECT_DEFAULT_RULES, NODE_SELECT_DEFAULT_RULES, REJECT_ACTION_RULES, TRANSPARENT_RULES } from '../config/index.js';
 import { addProxyWithDedup } from './helpers/proxyHelpers.js';
 import { buildSelectorMembers, buildNodeSelectMembers, buildCustomRuleMembers, uniqueNames } from './helpers/groupBuilder.js';
 
@@ -267,7 +267,7 @@ export class SurgeConfigBuilder extends BaseConfigBuilder {
                 name,
                 'url-test',
                 this.sanitizeOptions(proxyList),
-                ', url=http://www.gstatic.com/generate_204, interval=300'
+                `, url=${AI_AUTO_TEST_URL}, interval=300`
             )
         );
     }
@@ -289,22 +289,9 @@ export class SurgeConfigBuilder extends BaseConfigBuilder {
                 if (this.hasProxyGroup(name)) {
                     return;
                 }
-                if (AI_AUTO_RULES.has(outbound)) {
-                    const autoName = this.t('outboundNames.AI Auto');
-                    const aiCandidates = this.sanitizeOptions(proxyList);
-                    if (aiCandidates.length > 0 && !this.hasProxyGroup(autoName)) {
-                        this.config['proxy-groups'].push(
-                            this.createProxyGroup(
-                                autoName,
-                                'url-test',
-                                aiCandidates,
-                                `, url=${AI_AUTO_TEST_URL}, interval=300`
-                            )
-                        );
-                    }
-                    if (aiCandidates.length > 0 || this.hasProxyGroup(autoName)) {
-                        options = [autoName, ...options.filter(p => p !== autoName)];
-                    }
+                if (outbound === 'AI Services' && this.includeAutoSelect) {
+                    const autoName = this.t('outboundNames.Auto Select');
+                    options = [autoName, ...options.filter(p => p !== autoName)];
                 }
                 // For rules that should default to DIRECT, move DIRECT to the front
                 if (DIRECT_DEFAULT_RULES.has(outbound)) {

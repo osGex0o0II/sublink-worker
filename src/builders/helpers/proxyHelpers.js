@@ -16,6 +16,27 @@ function defaultIsSame(a, b) {
     return JSON.stringify(a) === JSON.stringify(b);
 }
 
+const INFO_NODE_PATTERNS = [
+    /(?:剩余|已用|总计|总量|流量|到期|过期|有效期|重置|套餐|订阅|官网|公告|通知|客服|工单|账户|账号|倍率|使用量)/i,
+    /(?:traffic|expire|expiry|expired|remaining|used|total|reset|renew|plan|package|subscription|official|website|notice|support|account|quota|data\s*usage)/i,
+    /\b\d{4}[-/.]\d{1,2}[-/.]\d{1,2}\b.*(?:expire|expiry|expired|到期|过期|有效期)/i,
+    /\b\d+(?:\.\d+)?\s*(?:GB|MB|TB)\b.*(?:remaining|used|total|left|剩余|已用|总量|流量)/i
+];
+
+export function isInformationalProxyName(name) {
+    if (typeof name !== 'string') return false;
+    const normalized = name
+        .replace(/[\s|｜:：,，;；()[\]【】{}<>《》"'`~!！?？]+/g, ' ')
+        .trim();
+
+    if (!normalized) return false;
+    return INFO_NODE_PATTERNS.some(pattern => pattern.test(normalized));
+}
+
+export function isInformationalProxy(proxy, getName = defaultGetName) {
+    return isInformationalProxyName(getName(proxy));
+}
+
 export function addProxyWithDedup(collection, proxy, { getName = defaultGetName, setName = defaultSetName, isSame = defaultIsSame } = {}) {
     if (!proxy) return;
     if (!Array.isArray(collection)) {

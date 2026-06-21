@@ -2,6 +2,7 @@ import { ProxyParser } from '../parsers/index.js';
 import { createStableProviderName, deepCopy, tryDecodeSubscriptionLines, decodeBase64 } from '../utils.js';
 import { createTranslator } from '../i18n/index.js';
 import { generateRules, getOutbounds, PREDEFINED_RULE_SETS } from '../config/index.js';
+import { isInformationalProxy } from './helpers/proxyHelpers.js';
 
 export class BaseConfigBuilder {
     constructor(inputString, baseConfig, lang, userAgent, groupByCountry = false, includeAutoSelect = true) {
@@ -358,7 +359,7 @@ export class BaseConfigBuilder {
     }
 
     addCustomItems(customItems) {
-        const validItems = customItems.filter(item => item != null);
+        const validItems = customItems.filter(item => item != null && !isInformationalProxy(item, proxy => proxy?.tag));
         validItems.forEach(item => {
             if (item?.tag) {
                 const convertedProxy = this.convertProxy(item);

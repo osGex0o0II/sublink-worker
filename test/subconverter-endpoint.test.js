@@ -47,9 +47,9 @@ describe('GET /subconverter', () => {
         expect(text).toContain('GEOSITE,youtube');
         expect(text).toContain('GEOIP,telegram');
         expect(text).toContain('DOMAIN-SUFFIX,push.apple.com');
-        expect(text).toContain('custom_proxy_group=🤖 AI 自动选择`url-test`.*`https://api.openai.com/v1/models`300,,50');
+        expect(text).toContain('custom_proxy_group=⚡ 自动选择`url-test`.*`https://api.openai.com/v1/models`300,,50');
         expect(text).toContain('expected-status=200-499');
-        expect(text).toContain('custom_proxy_group=💬 AI 服务`select`[]🤖 AI 自动选择');
+        expect(text).toContain('custom_proxy_group=💬 AI 服务`select`[]⚡ 自动选择');
     });
 
     it('accepts minimal preset', async () => {
@@ -78,7 +78,7 @@ describe('GET /subconverter', () => {
         expect(text).toContain('GEOSITE,geolocation-!cn');
         expect(text).toContain('DOMAIN-SUFFIX,push.apple.com');
         expect(text).toContain('GEOSITE,category-ai-!cn');
-        expect(text).toContain('custom_proxy_group=🤖 AI 自动选择`url-test`.*`https://api.openai.com/v1/models`300,,50');
+        expect(text).toContain('custom_proxy_group=⚡ 自动选择`url-test`.*`https://api.openai.com/v1/models`300,,50');
         expect(text).toContain('expected-status=200-499');
     });
 

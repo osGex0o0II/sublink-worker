@@ -6,7 +6,7 @@
 import { createTranslator } from '../i18n/index.js';
 import { generateRules } from './ruleGenerators.js';
 import { COUNTRY_DATA } from '../utils.js';
-import { AI_AUTO_RULES, AI_AUTO_TEST_URL, DIRECT_DEFAULT_RULES, NODE_SELECT_DEFAULT_RULES, REJECT_ACTION_RULES, TRANSPARENT_RULES } from './rules.js';
+import { AI_AUTO_TEST_URL, DIRECT_DEFAULT_RULES, NODE_SELECT_DEFAULT_RULES, REJECT_ACTION_RULES, TRANSPARENT_RULES } from './rules.js';
 
 const SPEED_TEST_URL = 'http://www.gstatic.com/generate_204';
 const HIDDEN_GROUP_OPTION = 'hidden=true';
@@ -108,7 +108,6 @@ export function generateSubconverterConfig({ selectedRules = [], customRules = [
 	lines.push('');
 
 	const autoSelectName = t('outboundNames.Auto Select');
-	const aiAutoName = t('outboundNames.AI Auto');
 	const manualSelectName = t('outboundNames.Node Select');
 
 	// Pre-compute country group names and lines if groupByCountry is enabled
@@ -146,11 +145,7 @@ export function generateSubconverterConfig({ selectedRules = [], customRules = [
 
 	// Auto Select group
 	if (includeAutoSelect) {
-		lines.push(`custom_proxy_group=${autoSelectName}\`url-test\`.*\`${SPEED_TEST_URL}\`300,,50\`${HIDDEN_GROUP_OPTION}`);
-	}
-
-	if (rules.some(rule => AI_AUTO_RULES.has(rule.outbound))) {
-		lines.push(`custom_proxy_group=${aiAutoName}\`url-test\`.*\`${AI_AUTO_TEST_URL}\`300,,50\`${HIDDEN_GROUP_OPTION}\`expected-status=${AI_AUTO_EXPECTED_STATUS}`);
+		lines.push(`custom_proxy_group=${autoSelectName}\`url-test\`.*\`${AI_AUTO_TEST_URL}\`300,,50\`${HIDDEN_GROUP_OPTION}\`expected-status=${AI_AUTO_EXPECTED_STATUS}`);
 	}
 
 	// Country groups (url-test per country with regex matching)
@@ -173,19 +168,19 @@ export function generateSubconverterConfig({ selectedRules = [], customRules = [
 			lines.push(`custom_proxy_group=${groupName}\`select\`[]REJECT\`[]DIRECT`);
 		} else if (DIRECT_DEFAULT_RULES.has(rule.outbound)) {
 			lines.push(`custom_proxy_group=${groupName}\`select\`[]DIRECT\`[]${manualSelectName}`);
-		} else if (AI_AUTO_RULES.has(rule.outbound)) {
+		} else if (rule.outbound === 'AI Services') {
 			if (groupByCountry) {
 				const refs = buildCountryGroupRefs(countryGroupNames);
 				if (includeAutoSelect) {
-					lines.push(`custom_proxy_group=${groupName}\`select\`[]${aiAutoName}\`[]${manualSelectName}\`[]${autoSelectName}\`${refs}\`[]DIRECT`);
+					lines.push(`custom_proxy_group=${groupName}\`select\`[]${autoSelectName}\`[]${manualSelectName}\`${refs}\`[]DIRECT`);
 				} else {
-					lines.push(`custom_proxy_group=${groupName}\`select\`[]${aiAutoName}\`[]${manualSelectName}\`${refs}\`[]DIRECT`);
+					lines.push(`custom_proxy_group=${groupName}\`select\`[]${manualSelectName}\`${refs}\`[]DIRECT`);
 				}
 			} else {
 				if (includeAutoSelect) {
-					lines.push(`custom_proxy_group=${groupName}\`select\`[]${aiAutoName}\`[]${manualSelectName}\`[]${autoSelectName}\`[]DIRECT\`.*`);
+					lines.push(`custom_proxy_group=${groupName}\`select\`[]${autoSelectName}\`[]${manualSelectName}\`[]DIRECT\`.*`);
 				} else {
-					lines.push(`custom_proxy_group=${groupName}\`select\`[]${aiAutoName}\`[]${manualSelectName}\`[]DIRECT\`.*`);
+					lines.push(`custom_proxy_group=${groupName}\`select\`[]${manualSelectName}\`[]DIRECT\`.*`);
 				}
 			}
 		} else {

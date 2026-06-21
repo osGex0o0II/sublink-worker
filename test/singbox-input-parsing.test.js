@@ -400,13 +400,13 @@ describe('Sing-Box JSON input parsing', () => {
         expect(result.outbounds).toEqual(expect.arrayContaining([
             expect.objectContaining({
                 type: 'urltest',
-                tag: '🤖 AI 自动选择',
+                tag: '⚡ 自动选择',
                 url: 'https://api.openai.com/v1/models'
             }),
             expect.objectContaining({
                 type: 'selector',
                 tag: '💬 AI 服务',
-                outbounds: expect.arrayContaining(['🤖 AI 自动选择'])
+                outbounds: expect.arrayContaining(['⚡ 自动选择'])
             })
         ]));
     });
