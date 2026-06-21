@@ -140,6 +140,8 @@ export const formLogicFn = (t) => {
                 this.configEditor = localStorage.getItem('configEditor') || '';
                 this.configType = localStorage.getItem('configType') || 'singbox';
                 this.customShortCode = localStorage.getItem('customShortCode') || '';
+                this.selectedPredefinedRule = localStorage.getItem('selectedPredefinedRule') || this.selectedPredefinedRule;
+                this.selectedRules = this.parseSavedRules(localStorage.getItem('selectedRules'));
                 const initialUrlParams = new URLSearchParams(window.location.search);
                 this.currentConfigId = initialUrlParams.get('configId') || '';
 
@@ -177,6 +179,8 @@ export const formLogicFn = (t) => {
                     this.resetConfigValidation();
                 });
                 this.$watch('customShortCode', val => localStorage.setItem('customShortCode', val));
+                this.$watch('selectedPredefinedRule', val => localStorage.setItem('selectedPredefinedRule', val));
+                this.$watch('selectedRules', val => localStorage.setItem('selectedRules', JSON.stringify(val)));
                 this.$watch('accordionSections', val => localStorage.setItem('accordionSections', JSON.stringify(val)), { deep: true });
             },
 
@@ -195,8 +199,18 @@ export const formLogicFn = (t) => {
             },
 
             withoutBaseRules(rules = []) {
-                const baseRules = Array.isArray(window.BASE_RULES) ? window.BASE_RULES : [];
-                return (Array.isArray(rules) ? rules : []).filter(rule => !baseRules.includes(rule));
+                const mandatoryRules = Array.isArray(window.MANDATORY_RULES) ? window.MANDATORY_RULES : (Array.isArray(window.BASE_RULES) ? window.BASE_RULES : []);
+                return (Array.isArray(rules) ? rules : []).filter(rule => !mandatoryRules.includes(rule));
+            },
+
+            parseSavedRules(value) {
+                if (!value) return this.selectedRules;
+                try {
+                    const parsed = JSON.parse(value);
+                    return Array.isArray(parsed) ? this.withoutBaseRules(parsed) : this.selectedRules;
+                } catch {
+                    return this.selectedRules;
+                }
             },
 
             getSubconverterUrl() {
@@ -598,14 +612,20 @@ export const formLogicFn = (t) => {
                 // Extract selectedRules
                 const selectedRules = params.get('selectedRules');
                 if (selectedRules) {
-                    try {
-                        const parsed = JSON.parse(selectedRules);
-                        if (Array.isArray(parsed)) {
-                            this.selectedRules = this.withoutBaseRules(parsed);
-                            this.selectedPredefinedRule = 'custom';
+                    const presets = window.PREDEFINED_RULE_SETS || {};
+                    if (presets[selectedRules]) {
+                        this.selectedPredefinedRule = selectedRules;
+                        this.selectedRules = this.withoutBaseRules(presets[selectedRules]);
+                    } else {
+                        try {
+                            const parsed = JSON.parse(selectedRules);
+                            if (Array.isArray(parsed)) {
+                                this.selectedRules = this.withoutBaseRules(parsed);
+                                this.selectedPredefinedRule = 'custom';
+                            }
+                        } catch (e) {
+                            console.warn('Failed to parse selectedRules:', e);
                         }
-                    } catch (e) {
-                        console.warn('Failed to parse selectedRules:', e);
                     }
                 }
 

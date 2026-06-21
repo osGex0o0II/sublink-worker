@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { BASE_RULES, PREDEFINED_RULE_SETS } from '../src/config/index.js';
+import { BASE_RULES, MANDATORY_RULES, PREDEFINED_RULE_SETS, generateRules } from '../src/config/index.js';
 import { parseSelectedRules } from '../src/app/createApp.jsx';
 
 /**
@@ -9,8 +9,20 @@ import { parseSelectedRules } from '../src/app/createApp.jsx';
 
 describe('selectedRules backward compatibility', () => {
     it('should keep mandatory routing rules out of presets', () => {
-        expect(BASE_RULES).toEqual(expect.arrayContaining(['Private', 'Location:CN', 'Github']));
+        expect(MANDATORY_RULES).toEqual(expect.arrayContaining(['Private', 'Location:CN', 'Github']));
+        expect(BASE_RULES).toBe(MANDATORY_RULES);
         expect(PREDEFINED_RULE_SETS.balanced).not.toContain('Github');
+    });
+
+    it('should not mutate custom rule order when generating rules', () => {
+        const customRules = [
+            { name: 'First', domain_suffix: 'first.example' },
+            { name: 'Second', domain_suffix: 'second.example' }
+        ];
+
+        generateRules('minimal', customRules);
+
+        expect(customRules.map(rule => rule.name)).toEqual(['First', 'Second']);
     });
 
     it('should accept "minimal" preset name', () => {

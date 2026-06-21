@@ -3,7 +3,7 @@
  * Functions for generating rules and rule sets
  */
 
-import { BASE_RULES, UNIFIED_RULES, PREDEFINED_RULE_SETS, SITE_RULE_SETS, IP_RULE_SETS, CLASH_SITE_RULE_SETS, CLASH_IP_RULE_SETS } from './rules.js';
+import { MANDATORY_RULES, UNIFIED_RULES, PREDEFINED_RULE_SETS, SITE_RULE_SETS, IP_RULE_SETS, CLASH_SITE_RULE_SETS, CLASH_IP_RULE_SETS } from './rules.js';
 import { SITE_RULE_SET_BASE_URL, IP_RULE_SET_BASE_URL, CLASH_SITE_RULE_SET_BASE_URL, CLASH_IP_RULE_SET_BASE_URL } from './ruleUrls.js';
 
 function toStringArray(value) {
@@ -27,7 +27,7 @@ export function normalizeSelectedRules(selectedRules = []) {
 		selectedRules = PREDEFINED_RULE_SETS.minimal;
 	}
 
-	return [...new Set([...BASE_RULES, ...selectedRules])];
+	return [...new Set([...MANDATORY_RULES, ...selectedRules])];
 }
 
 // Helper function to get outbounds based on selected rule names
@@ -56,8 +56,7 @@ export function generateRules(selectedRules = [], customRules = []) {
 		}
 	});
 
-	customRules.reverse();
-	customRules.forEach((rule) => {
+	[...customRules].reverse().forEach((rule) => {
 		rules.unshift({
 			site_rules: toStringArray(rule.site),
 			ip_rules: toStringArray(rule.ip),

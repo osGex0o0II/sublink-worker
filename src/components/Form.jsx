@@ -1,6 +1,6 @@
 /** @jsxRuntime automatic */
 /** @jsxImportSource hono/jsx */
-import { BASE_RULES, PREDEFINED_RULE_SETS, UNIFIED_RULES } from '../config/index.js';
+import { DIRECT_DEFAULT_RULES, MANDATORY_RULES, PREDEFINED_RULE_SETS, UNIFIED_RULES } from '../config/index.js';
 import { CustomRules } from './CustomRules.jsx';
 import { TextareaWithActions } from './TextareaWithActions.jsx';
 import { ValidatedTextarea } from './ValidatedTextarea.jsx';
@@ -78,7 +78,8 @@ export const Form = (props) => {
   const scriptContent = `
     window.APP_TRANSLATIONS = ${JSON.stringify(translations)};
     window.PREDEFINED_RULE_SETS = ${JSON.stringify(PREDEFINED_RULE_SETS)};
-    window.BASE_RULES = ${JSON.stringify(BASE_RULES)};
+    window.MANDATORY_RULES = ${JSON.stringify(MANDATORY_RULES)};
+    window.BASE_RULES = ${JSON.stringify(MANDATORY_RULES)};
     window.APP_LANG = ${JSON.stringify(lang || 'zh-CN')};
     if (typeof __name === 'undefined') { var __name = function(fn) { return fn; }; }
     (${formLogicFn.toString()})();
@@ -161,18 +162,33 @@ export const Form = (props) => {
 
     {/* Rule Selection */ }
     <AdvancedSection id="rules" title={t('ruleSelection')} icon="fas fa-filter">
-      <div class="flex items-center justify-end mb-4">
+      <div class="flex items-center justify-between gap-3 mb-4">
+        <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{t('rulePreset')}</span>
         <select x-model="selectedPredefinedRule" x-on:change="applyPredefinedRule()" class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-        <option value="custom">{t('custom')}</option>
-        <option value="domestic">{t('domestic')}</option>
         <option value="balanced">{t('balanced')}</option>
+        <option value="domestic">{t('domestic')}</option>
         <option value="media">{t('media')}</option>
         <option value="full">{t('full')}</option>
+        <option value="custom">{t('custom')}</option>
       </select>
           </div>
 
+  <div class="mb-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-3">
+    <div class="mb-2 text-xs font-semibold text-gray-500 dark:text-gray-400">{t('mandatoryRules')}</div>
+    <div class="flex flex-wrap gap-2">
+      {UNIFIED_RULES.filter(rule => MANDATORY_RULES.includes(rule.name)).map((rule) => (
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-300">
+          <span>{t(`outboundNames.${rule.name}`)}</span>
+          <span class="text-[11px] font-medium text-gray-400 dark:text-gray-500">
+            {DIRECT_DEFAULT_RULES.has(rule.name) ? t('directRoute') : t('proxyRoute')}
+          </span>
+        </span>
+      ))}
+    </div>
+  </div>
+
   <div class="flex flex-wrap gap-2">
-    {UNIFIED_RULES.filter(rule => !BASE_RULES.includes(rule.name)).map((rule) => (
+    {UNIFIED_RULES.filter(rule => !MANDATORY_RULES.includes(rule.name)).map((rule) => (
       <label class="flex items-center px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 hover:bg-primary-50 dark:hover:bg-primary-900/20 cursor-pointer transition-colors group">
         <input
           type="checkbox"

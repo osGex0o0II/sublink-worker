@@ -24,12 +24,33 @@ describe('formLogic toString fix', () => {
 
   it('formData() returns a valid Alpine data object', () => {
     // Simulate browser global environment using Function constructor
-    const fakeWindow = { APP_TRANSLATIONS: {}, PREDEFINED_RULE_SETS: {} };
+    const storage = new Map();
+    const fakeLocalStorage = {
+      getItem: key => storage.get(key) ?? null,
+      setItem: (key, value) => storage.set(key, String(value)),
+      removeItem: key => storage.delete(key)
+    };
+    const fakeWindow = {
+      APP_TRANSLATIONS: {},
+      PREDEFINED_RULE_SETS: {},
+      MANDATORY_RULES: [],
+      location: {
+        href: 'https://example.com/',
+        pathname: '/',
+        search: '',
+        hash: ''
+      },
+      history: { replaceState() {} }
+    };
     const fn = new Function('window', '(' + formLogicFn.toString() + ')(); return window;');
     const result = fn(fakeWindow);
     const data = result.formData();
+    globalThis.localStorage = fakeLocalStorage;
+    data.$watch = () => {};
+    data.init();
     expect(typeof data.submitForm).toBe('function');
     expect(typeof data.toggleAccordion).toBe('function');
     expect(data.showAdvanced).toBe(false);
+    delete globalThis.localStorage;
   });
 });

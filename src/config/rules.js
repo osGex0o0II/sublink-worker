@@ -106,8 +106,8 @@ export const UNIFIED_RULES = [
 	}
 ];
 
-// Rule names that should default to DIRECT instead of Node Select
-export const BASE_RULES = ['Private', 'Location:CN', 'Github'];
+export const MANDATORY_RULES = ['Private', 'Location:CN', 'Github'];
+export const BASE_RULES = MANDATORY_RULES;
 export const AI_AUTO_TEST_URL = 'https://api.openai.com/v1/models';
 export const AI_AUTO_RULES = new Set(['AI Services']);
 export const DIRECT_DEFAULT_RULES = new Set(['Private', 'Location:CN']);
