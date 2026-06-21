@@ -34,7 +34,7 @@ describe('GET /subconverter', () => {
         const res = await app.request('http://localhost/subconverter');
         const text = await res.text();
 
-        // balanced preset includes GitHub, Google, Youtube, AI Services, Telegram, Apple Push, etc.
+        // balanced preset plus mandatory rules includes GitHub, Google, Youtube, AI Services, Telegram, Apple Push, etc.
         PREDEFINED_RULE_SETS.balanced.forEach(ruleName => {
             // Each selected rule should produce at least one ruleset line
             // (either GEOSITE or GEOIP)
@@ -60,6 +60,7 @@ describe('GET /subconverter', () => {
         expect(text).toContain('GEOSITE,geolocation-cn');
         expect(text).toContain('GEOIP,private');
         expect(text).toContain('GEOSITE,geolocation-!cn');
+        expect(text).toContain('DOMAIN-SUFFIX,push.apple.com');
 
         // Should NOT contain rules outside minimal
         expect(text).not.toContain('GEOSITE,google');
@@ -74,7 +75,7 @@ describe('GET /subconverter', () => {
         expect(text).toContain('GEOSITE,geolocation-cn');
         expect(text).toContain('GEOIP,private');
         expect(text).toContain('GEOSITE,geolocation-!cn');
-        expect(text).not.toContain('DOMAIN-SUFFIX,push.apple.com');
+        expect(text).toContain('DOMAIN-SUFFIX,push.apple.com');
     });
 
     it('accepts media preset', async () => {

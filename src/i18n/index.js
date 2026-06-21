@@ -134,9 +134,6 @@ export const translations = {
       'Social Media': '🌐 社交媒体',
       'Streaming': '🎬 流媒体',
       'Gaming': '🎮 游戏平台',
-      'Education': '📚 教育资源',
-      'Financial': '💰 金融服务',
-      'Cloud Services': '☁️ 云服务',
       'Non-China': '🌐 非中国',
       'Manual Switch': '🖐️ 手动切换',
       'GLOBAL': 'GLOBAL'
@@ -305,9 +302,6 @@ export const translations = {
       'Social Media': '🌐 Social Media',
       'Streaming': '🎬 Streaming',
       'Gaming': '🎮 Gaming Platform',
-      'Education': '📚 Education Resources',
-      'Financial': '💰 Financial Services',
-      'Cloud Services': '☁️ Cloud Services',
       'Non-China': '🌐 Non-China',
       'Manual Switch': '🖐️ Manual Switch',
       'GLOBAL': 'GLOBAL'
@@ -470,9 +464,6 @@ export const translations = {
       'Social Media': '🌐 شبکه‌های اجتماعی',
       'Streaming': '🎬 استریمینگ',
       'Gaming': '🎮 پلتفرم بازی',
-      'Education': '📚 منابع آموزشی',
-      'Financial': '💰 سرویس‌های مالی',
-      'Cloud Services': '☁️ سرویس‌های ابری',
       'Non-China': '🌐 خارج از چین',
       'Manual Switch': '🖐️ Manual Switch',
       'GLOBAL': 'GLOBAL'
@@ -635,9 +626,6 @@ export const translations = {
       'Social Media': '🌐 Социальные сети',
       'Streaming': '🎬 Стриминг',
       'Gaming': '🎮 Игровые платформы',
-      'Education': '📚 Образовательные ресурсы',
-      'Financial': '💰 Финансовые сервисы',
-      'Cloud Services': '☁️ Облачные сервисы',
       'Non-China': '🌐 За пределами Китая',
       'Manual Switch': '🖐️ Ручной выбор',
       'GLOBAL': 'GLOBAL'

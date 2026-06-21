@@ -9,9 +9,10 @@ import { parseSelectedRules } from '../src/app/createApp.jsx';
 
 describe('selectedRules backward compatibility', () => {
     it('should keep mandatory routing rules out of presets', () => {
-        expect(MANDATORY_RULES).toEqual(expect.arrayContaining(['Private', 'Location:CN', 'Github']));
+        expect(MANDATORY_RULES).toEqual(expect.arrayContaining(['Private', 'Location:CN', 'Github', 'Apple Push']));
         expect(BASE_RULES).toBe(MANDATORY_RULES);
         expect(PREDEFINED_RULE_SETS.balanced).not.toContain('Github');
+        expect(PREDEFINED_RULE_SETS.balanced).not.toContain('Apple Push');
     });
 
     it('should not mutate custom rule order when generating rules', () => {
@@ -41,7 +42,7 @@ describe('selectedRules backward compatibility', () => {
         const result = parseSelectedRules('balanced');
         expect(result).toEqual(PREDEFINED_RULE_SETS.balanced);
         expect(result.length).toBeGreaterThan(PREDEFINED_RULE_SETS.minimal.length);
-        expect(result).toContain('Apple Push');
+        expect(result).not.toContain('Apple Push');
         expect(result).not.toContain('Github');
     });
 
