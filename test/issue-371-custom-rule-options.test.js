@@ -14,17 +14,14 @@ describe('Issue #371 - custom rule groups keep full proxy choices without countr
     ];
 
     const expectedSingboxCountryMembers = [
-        '🐟 漏网之鱼',
-        '⚡ 自动选择',
-        '🖐️ 手动切换',
+        '🖐️ 手动选择',
         'US-Node-1',
         'UK-Node-1',
         'DIRECT'
     ];
 
     const expectedSingboxFlatMembers = [
-        '🐟 漏网之鱼',
-        '⚡ 自动选择',
+        '🖐️ 手动选择',
         'US-Node-1',
         'UK-Node-1',
         'DIRECT'

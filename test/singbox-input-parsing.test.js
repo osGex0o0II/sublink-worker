@@ -51,7 +51,7 @@ describe('Sing-Box JSON input parsing', () => {
             },
             {
                 "type": "selector",
-                "tag": "漏网之鱼",
+                "tag": "手动选择",
                 "outbounds": ["SS-Test", "VLESS-Test", "VMess-Test"]
             }
         ],
@@ -99,7 +99,7 @@ describe('Sing-Box JSON input parsing', () => {
         // Should not include DIRECT, REJECT, or selector groups as proxies
         expect(proxies.map(p => p.tag)).not.toContain('DIRECT');
         expect(proxies.map(p => p.tag)).not.toContain('REJECT');
-        expect(proxies.map(p => p.tag)).not.toContain('漏网之鱼');
+        expect(proxies.map(p => p.tag)).not.toContain('手动选择');
     });
 
     it('should preserve proxy details like TLS and transport settings', async () => {
@@ -232,7 +232,7 @@ describe('Sing-Box JSON input parsing', () => {
             ],
             dns: {
                 servers: [
-                    { tag: 'remote', address: 'tls://1.1.1.1', detour: '🐟 漏网之鱼' },
+                    { tag: 'remote', address: 'tls://1.1.1.1', detour: '🖐️ 手动选择' },
                     { tag: 'local', address: 'https://dns.alidns.com/dns-query', address_resolver: 'remote', strategy: 'prefer_ipv4' },
                     { tag: 'fake', address: 'fakeip' },
                     { tag: 'block', address: 'rcode://refused' }
@@ -388,13 +388,13 @@ describe('Sing-Box JSON input parsing', () => {
         expect(result.route.rules).toEqual(expect.arrayContaining([
             expect.objectContaining({
                 domain_suffix: ['push.apple.com'],
-                outbound: '🐟 漏网之鱼'
+                outbound: '⚡ 自动选择'
             })
         ]));
         expect(result.route.rules).toEqual(expect.arrayContaining([
             expect.objectContaining({ rule_set: ['private-ip'], outbound: 'DIRECT' }),
-            expect.objectContaining({ rule_set: ['github', 'gitlab'], outbound: '🐟 漏网之鱼' }),
-            expect.objectContaining({ rule_set: ['geolocation-!cn'], outbound: '🐟 漏网之鱼' }),
+            expect.objectContaining({ rule_set: ['github', 'gitlab'], outbound: '⚡ 自动选择' }),
+            expect.objectContaining({ rule_set: ['geolocation-!cn'], outbound: '⚡ 自动选择' }),
             expect.objectContaining({ rule_set: ['category-ai-!cn'], outbound: '💬 AI 服务' })
         ]));
         expect(result.outbounds).toEqual(expect.arrayContaining([

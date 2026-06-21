@@ -94,7 +94,7 @@ describe('Issues #370/#373/#277 - remote subscription decode and empty Clash out
         const built = yaml.load(await builder.build());
 
         const autoSelect = built['proxy-groups'].find(group => group.name === '⚡ 自动选择');
-        const nodeSelect = built['proxy-groups'].find(group => group.name === '🐟 漏网之鱼');
+        const nodeSelect = built['proxy-groups'].find(group => group.name === '🖐️ 手动选择');
 
         expect(autoSelect).toBeUndefined();
         expect(nodeSelect.proxies).toEqual(['DIRECT', 'REJECT']);

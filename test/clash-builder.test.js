@@ -62,7 +62,7 @@ proxies:
     const yamlText = await builder.build();
     const built = yaml.load(yamlText);
 
-    const nodeSelect = (built['proxy-groups'] || []).find(g => g && g.name === '🐟 漏网之鱼');
+    const nodeSelect = (built['proxy-groups'] || []).find(g => g && g.name === '🖐️ 手动选择');
     expect(nodeSelect).toBeDefined();
     expect(nodeSelect.use).toContain('my-provider');
   });
@@ -83,14 +83,13 @@ ss://YWVzLTEyOC1nY206dGVzdA@example.com:444#JP-Node
     const aiAutoGroup = groups.find(g => g.name === '🤖 AI 自动选择');
 
     expect(visibleGroupNames).toEqual(expect.arrayContaining([
-      '🐟 漏网之鱼',
+      '🖐️ 手动选择',
       '💬 AI 服务',
       '🔍 谷歌服务'
     ]));
     expect(hiddenGroupNames).toEqual(expect.arrayContaining([
       '⚡ 自动选择',
       '🤖 AI 自动选择',
-      '🖐️ 手动切换',
       '🇭🇰 Hong Kong',
       '🇯🇵 Japan'
     ]));
@@ -135,11 +134,11 @@ ss://YWVzLTEyOC1nY206dGVzdA@example.com:444#US-Node-1
       'RULE-SET,private-ip,DIRECT,no-resolve',
       'RULE-SET,cn,DIRECT',
       'RULE-SET,cn-ip,DIRECT,no-resolve',
-      `RULE-SET,geolocation-!cn,${t('outboundNames.Node Select')}`
+      `RULE-SET,geolocation-!cn,${t('outboundNames.Fall Back')}`
     ]));
 
     // Other groups should NOT default to DIRECT
-    const fallbackName = t('outboundNames.Fall Back');
+    const fallbackName = t('outboundNames.Auto Select');
     const fallbackGroup = (built['proxy-groups'] || []).find(g => g && g.name === fallbackName);
     expect(fallbackGroup).toBeDefined();
     expect(fallbackGroup.proxies[0]).not.toBe('DIRECT');

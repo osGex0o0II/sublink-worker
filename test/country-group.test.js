@@ -42,20 +42,19 @@ vmess://ewogICJ2IjogIjIiLAogICJwcyI6ICJ0dzEubm9kZS5jb20iLAogICJhZGQiOiAidHcxLm5v
         expect(twGroup.proxies.length).toBe(1);
         expect(twGroup.type).toBe('url-test');
 
-        // Check manual switch group
-        const manualName = t('outboundNames.Manual Switch');
+        // Check manual select group
+        const manualName = t('outboundNames.Node Select');
         const manualGroup = (built['proxy-groups'] || []).find(g => g && g.name === manualName);
         expect(manualGroup).toBeDefined();
         expect(manualGroup.type).toBe('select');
-        expect(manualGroup.proxies.length).toBe(proxiesCount);
 
-        // Check node select group
+        // Check manual select group
         const nodeSelectLabel = t('outboundNames.Node Select');
         const autoName = t('outboundNames.Auto Select');
         const nodeSelectGroup = (built['proxy-groups'] || []).find(g => g && g.name === nodeSelectLabel);
         expect(nodeSelectGroup).toBeDefined();
 
-        const expectedProxies = ['DIRECT', 'REJECT', autoName, manualName, '🇭🇰 Hong Kong', '🇹🇼 Taiwan', '🇺🇸 United States'];
+        const expectedProxies = ['DIRECT', 'REJECT', autoName, '🇭🇰 Hong Kong', '🇹🇼 Taiwan', '🇺🇸 United States'];
         const actualProxies = nodeSelectGroup.proxies || [];
         expect(actualProxies.sort()).toEqual(expectedProxies.sort());
 
@@ -63,7 +62,7 @@ vmess://ewogICJ2IjogIjIiLAogICJwcyI6ICJ0dzEubm9kZS5jb20iLAogICJhZGQiOiAidHcxLm5v
         const youtubeLabel = t('outboundNames.Youtube');
         const youtubeGroup = (built['proxy-groups'] || []).find(g => g && g.name === youtubeLabel);
         if (youtubeGroup) {
-            const expectedMembers = [nodeSelectLabel, autoName, manualName, '🇭🇰 Hong Kong', '🇹🇼 Taiwan', '🇺🇸 United States'];
+            const expectedMembers = [nodeSelectLabel, '🇭🇰 Hong Kong', '🇹🇼 Taiwan', '🇺🇸 United States'];
             const actualMembers = youtubeGroup.proxies || [];
             const missing = expectedMembers.filter(name => !actualMembers.includes(name));
             expect(missing).toEqual([]);

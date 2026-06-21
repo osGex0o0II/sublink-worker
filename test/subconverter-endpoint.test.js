@@ -152,8 +152,8 @@ describe('GET /subconverter', () => {
         const res = await app.request('http://localhost/subconverter?selectedRules=minimal');
         const text = await res.text();
 
-        // Fall Back contains auto selection first and manual nodes after it
-        expect(text).toMatch(/custom_proxy_group=.*漏网之鱼.*select/);
+        // Auto Select contains auto selection first and manual nodes after it
+        expect(text).toMatch(/custom_proxy_group=.*手动选择.*select/);
         expect(text).toMatch(/custom_proxy_group=.*自动选择.*url-test/);
 
         // FINAL rule
@@ -178,9 +178,9 @@ describe('GET /subconverter', () => {
 
         expect(text).toContain('ruleset=DIRECT,[]GEOIP,private');
         expect(text).toContain('ruleset=DIRECT,[]GEOSITE,cn');
-        expect(text).toContain('ruleset=🐟 漏网之鱼,[]GEOSITE,github');
-        expect(text).toContain('ruleset=🐟 漏网之鱼,[]DOMAIN-SUFFIX,push.apple.com');
-        expect(text).toContain('ruleset=🐟 漏网之鱼,[]GEOSITE,geolocation-!cn');
+        expect(text).toContain('ruleset=⚡ 自动选择,[]GEOSITE,github');
+        expect(text).toContain('ruleset=⚡ 自动选择,[]DOMAIN-SUFFIX,push.apple.com');
+        expect(text).toContain('ruleset=⚡ 自动选择,[]GEOSITE,geolocation-!cn');
         expect(text).not.toMatch(/custom_proxy_group=.*私有网络.*select/);
         expect(text).not.toMatch(/custom_proxy_group=.*国内服务.*select/);
         expect(text).not.toMatch(/custom_proxy_group=.*Github.*select/);
@@ -188,14 +188,14 @@ describe('GET /subconverter', () => {
         expect(text).not.toMatch(/custom_proxy_group=.*非中国.*select/);
     });
 
-    it('maps other rules to Node Select', async () => {
+    it('maps other rules to Manual Select', async () => {
         const app = createTestApp();
         const rules = JSON.stringify(['Google']);
         const res = await app.request(`http://localhost/subconverter?selectedRules=${encodeURIComponent(rules)}`);
         const text = await res.text();
 
-        // Google group should reference Node Select
-        expect(text).toMatch(/custom_proxy_group=.*谷歌服务.*select.*\[].*漏网之鱼/);
+        // Google group should reference Manual Select
+        expect(text).toMatch(/custom_proxy_group=.*谷歌服务.*select.*\[].*手动选择/);
     });
 
     it('respects include_auto_select=false', async () => {
@@ -206,8 +206,8 @@ describe('GET /subconverter', () => {
         // Should NOT have Auto Select group
         expect(text).not.toMatch(/custom_proxy_group=.*自动选择.*url-test/);
 
-        // Node Select should not reference Auto Select
-        const nodeSelectLine = text.split('\n').find(l => l.includes('漏网之鱼') && l.includes('custom_proxy_group'));
+        // Manual Select should not reference Auto Select
+        const nodeSelectLine = text.split('\n').find(l => l.includes('手动选择') && l.includes('custom_proxy_group'));
         expect(nodeSelectLine).toBeDefined();
         expect(nodeSelectLine).not.toContain('自动选择');
     });
@@ -233,7 +233,7 @@ describe('GET /subconverter', () => {
 
         // English translations
         expect(text).toContain('Auto Select');
-        expect(text).toContain('Fall Back');
+        expect(text).toContain('Auto Select');
     });
 
     describe('group_by_country=true', () => {
@@ -248,21 +248,21 @@ describe('GET /subconverter', () => {
             expect(text).toMatch(/custom_proxy_group=🇺🇸 United States`url-test`\(\?i\)\(美国\|\\bUnited States\\b\|\\bUS\\b\)/);
         });
 
-        it('generates Manual Switch group with all nodes', async () => {
+        it('generates Manual Select group with all nodes', async () => {
             const app = createTestApp();
             const res = await app.request('http://localhost/subconverter?selectedRules=minimal&group_by_country=true');
             const text = await res.text();
 
-            // Manual Switch group should select all nodes
-            expect(text).toMatch(/custom_proxy_group=.*手动切换.*`select`\.\*/);
+            // Manual Select group should select auto and country groups
+            expect(text).toMatch(/custom_proxy_group=.*手动选择.*`select`.*\[]⚡ 自动选择/);
         });
 
-        it('Node Select references country groups instead of .*', async () => {
+        it('Manual Select references country groups instead of .*', async () => {
             const app = createTestApp();
             const res = await app.request('http://localhost/subconverter?selectedRules=minimal&group_by_country=true');
             const text = await res.text();
 
-            const nodeSelectLine = text.split('\n').find(l => l.includes('漏网之鱼') && l.includes('`select`'));
+            const nodeSelectLine = text.split('\n').find(l => l.includes('手动选择') && l.includes('`select`'));
             expect(nodeSelectLine).toBeDefined();
 
             // Should reference country groups
@@ -295,10 +295,10 @@ describe('GET /subconverter', () => {
             // Should NOT have Auto Select
             expect(text).not.toMatch(/custom_proxy_group=.*自动选择.*url-test/);
 
-            // Node Select should reference Manual Switch and country groups but NOT Auto Select
-            const nodeSelectLine = text.split('\n').find(l => l.includes('漏网之鱼') && l.includes('`select`'));
+            // Manual Select should reference country groups but NOT Auto Select
+            const nodeSelectLine = text.split('\n').find(l => l.includes('手动选择') && l.includes('`select`'));
             expect(nodeSelectLine).toBeDefined();
-            expect(nodeSelectLine).toContain('手动切换');
+            expect(nodeSelectLine).toContain('[]🇭🇰 Hong Kong');
             expect(nodeSelectLine).not.toContain('自动选择');
         });
 
@@ -316,8 +316,8 @@ describe('GET /subconverter', () => {
             const res = await app.request('http://localhost/subconverter?selectedRules=minimal&group_by_country=true&lang=en');
             const text = await res.text();
 
-            expect(text).toContain('Manual Switch');
-            expect(text).toContain('Fall Back');
+            expect(text).toContain('Manual Select');
+            expect(text).toContain('Auto Select');
             // Country groups should still appear
             expect(text).toContain('🇯🇵 Japan');
         });

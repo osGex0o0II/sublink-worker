@@ -76,7 +76,7 @@ describe('Auto Proxy Providers Detection', () => {
             expect(config['proxy-providers'][providerName].path).toBe(`./proxy_providers/${providerName}.yaml`);
 
             // proxy-groups should have 'use' field
-            const nodeSelect = config['proxy-groups'].find(g => g.name === '🐟 漏网之鱼');
+            const nodeSelect = config['proxy-groups'].find(g => g.name === '🖐️ 手动选择');
             expect(nodeSelect.use).toContain(providerName);
         });
 
@@ -130,7 +130,7 @@ describe('Auto Proxy Providers Detection', () => {
             const config = builder.config;
 
             expect(config.outbound_providers).toBeUndefined();
-            const nodeSelect = config.outbounds.find(o => o.tag === '🐟 漏网之鱼');
+            const nodeSelect = config.outbounds.find(o => o.tag === '🖐️ 手动选择');
             expect(nodeSelect.providers).toBeUndefined();
 
             const proxyOutbounds = config.outbounds.filter(o => o.server);
@@ -228,7 +228,7 @@ describe('Auto Proxy Providers Detection', () => {
             expect(new Set(providerNames).size).toBe(2);
             expect(providerNames.every(name => name.startsWith('_auto_provider_'))).toBe(true);
 
-            const nodeSelect = config['proxy-groups'].find(g => g.name === '🐟 漏网之鱼');
+            const nodeSelect = config['proxy-groups'].find(g => g.name === '🖐️ 手动选择');
             expect(nodeSelect.use).toEqual(expect.arrayContaining(providerNames));
         });
 
@@ -365,7 +365,7 @@ describe('Auto Proxy Providers Detection', () => {
                 .find(name => name.startsWith('_auto_provider_'));
             expect(config['proxy-providers'][autoProviderName]?.url).toBe('https://auto.example.com/clash-sub');
 
-            const nodeSelect = config['proxy-groups'].find(g => g.name === '🐟 漏网之鱼');
+            const nodeSelect = config['proxy-groups'].find(g => g.name === '🖐️ 手动选择');
             expect(nodeSelect.use).toContain('provider1');
             expect(nodeSelect.use).toContain(autoProviderName);
         });
@@ -399,7 +399,7 @@ describe('Auto Proxy Providers Detection', () => {
             const config = await builder.build();
 
             expect(config.outbound_providers).toBeUndefined();
-            const nodeSelect = config.outbounds.find(o => o.tag === '🐟 漏网之鱼');
+            const nodeSelect = config.outbounds.find(o => o.tag === '🖐️ 手动选择');
             expect(nodeSelect.providers).toBeUndefined();
             expect(config.outbounds.filter(o => o.server).length).toBeGreaterThan(0);
         });

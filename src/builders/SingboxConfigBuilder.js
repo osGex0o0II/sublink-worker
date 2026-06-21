@@ -20,9 +20,7 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
         this.externalUiDownloadUrl = externalUiDownloadUrl;
         this.singboxVersion = singboxVersion;  // '1.11' or '1.12'
 
-        if (this.config?.dns?.servers?.length > 0) {
-            this.config.dns.servers[0].detour = this.t('outboundNames.Node Select');
-        }
+        this.updateDefaultDnsDetour(this.getDefaultProxyTarget());
     }
 
     isCompatibleProviderFormat(format) {
@@ -94,6 +92,19 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
 
     hasAutoSelectCandidates(proxyList = this.getProxyList()) {
         return (Array.isArray(proxyList) && proxyList.length > 0) || this.getAllProviderTags().length > 0;
+    }
+
+    getDefaultProxyTarget(proxyList = this.getProxyList()) {
+        return this.includeAutoSelect && this.hasAutoSelectCandidates(proxyList)
+            ? this.t('outboundNames.Fall Back')
+            : this.t('outboundNames.Node Select');
+    }
+
+    updateDefaultDnsDetour(target) {
+        const dnsProxy = this.config?.dns?.servers?.find(server => server?.tag === 'dns_proxy');
+        if (dnsProxy) {
+            dnsProxy.detour = target;
+        }
     }
 
     addAutoSelectGroup(proxyList) {
@@ -221,20 +232,6 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
 
         const existingTags = new Set((this.config.outbounds || []).map(o => normalizeGroupName(o?.tag)).filter(Boolean));
 
-        const manualProxyNames = proxies.map(p => p?.tag).filter(Boolean);
-        const manualGroupName = manualProxyNames.length > 0 ? this.t('outboundNames.Manual Switch') : null;
-        if (manualGroupName) {
-            const manualNorm = normalizeGroupName(manualGroupName);
-            if (!existingTags.has(manualNorm)) {
-                this.config.outbounds.push({
-                    type: 'selector',
-                    tag: manualGroupName,
-                    outbounds: manualProxyNames
-                });
-                existingTags.add(manualNorm);
-            }
-        }
-
         const countries = Object.keys(countryGroups).sort((a, b) => a.localeCompare(b));
         const countryGroupNames = [];
         const includeAutoSelect = this.includeAutoSelect && this.hasAutoSelectCandidates();
@@ -264,7 +261,6 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
                 proxyList: [],
                 translator: this.t,
                 groupByCountry: true,
-                manualGroupName,
                 countryGroupNames,
                 includeAutoSelect,
                 includeReject: false
@@ -273,7 +269,7 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
         }
 
         this.countryGroupNames = countryGroupNames;
-        this.manualGroupName = manualGroupName;
+        this.manualGroupName = null;
     }
 
     /**
@@ -749,7 +745,7 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
             return { outbound: 'DIRECT' };
         }
         if (NODE_SELECT_DEFAULT_RULES.has(rule?.outbound)) {
-            return { outbound: this.t('outboundNames.Node Select') };
+            return { outbound: this.getDefaultProxyTarget() };
         }
         return { outbound: this.t(`outboundNames.${rule.outbound}`) };
     }
@@ -831,15 +827,18 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
         // hijack-dns before clash_mode so DNS never escapes into a selector when
         // the user toggles global mode (selectors only support TCP+UDP if the
         // currently selected node does, which is fragile).
+        const defaultProxyTarget = this.getDefaultProxyTarget();
+        this.updateDefaultDnsDetour(defaultProxyTarget);
+
         this.config.route.rules.unshift(
             { action: 'sniff' },
             { protocol: 'dns', action: 'hijack-dns' },
             { clash_mode: 'direct', outbound: 'DIRECT' },
-            { clash_mode: 'global', outbound: this.t('outboundNames.Node Select') }
+            { clash_mode: 'global', outbound: defaultProxyTarget }
         );
 
         this.config.route.auto_detect_interface = true;
-        this.config.route.final = this.t('outboundNames.Fall Back');
+        this.config.route.final = defaultProxyTarget;
         this.normalizeRuleSetReferences();
         // 如果启用了 Clash UI，添加配置
         // 如果启用 Clash UI 或传入了自定义参数，添加/覆盖 Clash API 配置

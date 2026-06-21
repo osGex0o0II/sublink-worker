@@ -117,8 +117,8 @@ export const translations = {
     outboundNames: {
       'Auto Select': '⚡ 自动选择',
       'AI Auto': '🤖 AI 自动选择',
-      'Node Select': '🐟 漏网之鱼',
-      'Fall Back': '🐟 漏网之鱼',
+      'Node Select': '🖐️ 手动选择',
+      'Fall Back': '⚡ 自动选择',
       'Ad Block': '🛑 广告拦截',
       'AI Services': '💬 AI 服务',
       'Bilibili': '📺 哔哩哔哩',
@@ -135,7 +135,7 @@ export const translations = {
       'Streaming': '🎬 流媒体',
       'Gaming': '🎮 游戏平台',
       'Non-China': '🌐 非中国',
-      'Manual Switch': '🖐️ 手动切换',
+      'Manual Switch': '🖐️ 手动选择',
       'GLOBAL': 'GLOBAL'
     },
     generalSettings: '通用设置',
@@ -285,8 +285,8 @@ export const translations = {
     outboundNames: {
       'Auto Select': '⚡ Auto Select',
       'AI Auto': '🤖 AI Auto',
-      'Node Select': '🐟 Fall Back',
-      'Fall Back': '🐟 Fall Back',
+      'Node Select': '🖐️ Manual Select',
+      'Fall Back': '⚡ Auto Select',
       'Ad Block': '🛑 Ad Blocking',
       'AI Services': '💬 AI Services',
       'Bilibili': '📺 Bilibili',
@@ -303,7 +303,7 @@ export const translations = {
       'Streaming': '🎬 Streaming',
       'Gaming': '🎮 Gaming Platform',
       'Non-China': '🌐 Non-China',
-      'Manual Switch': '🖐️ Manual Switch',
+      'Manual Switch': '🖐️ Manual Select',
       'GLOBAL': 'GLOBAL'
     },
     generalSettings: 'General Settings',
@@ -447,8 +447,8 @@ export const translations = {
     outboundNames: {
       'Auto Select': '⚡ انتخاب خودکار',
       'AI Auto': '🤖 انتخاب خودکار AI',
-      'Node Select': '🐟 فال بک',
-      'Fall Back': '🐟 فال بک',
+      'Node Select': '🖐️ انتخاب دستی',
+      'Fall Back': '⚡ انتخاب خودکار',
       'Ad Block': '🛑 مسدودسازی تبلیغات',
       'AI Services': '💬 سرویس‌های هوش مصنوعی',
       'Bilibili': '📺 بیلی‌بیلی',
@@ -465,7 +465,7 @@ export const translations = {
       'Streaming': '🎬 استریمینگ',
       'Gaming': '🎮 پلتفرم بازی',
       'Non-China': '🌐 خارج از چین',
-      'Manual Switch': '🖐️ Manual Switch',
+      'Manual Switch': '🖐️ انتخاب دستی',
       'GLOBAL': 'GLOBAL'
     },
     generalSettings: 'تنظیمات عمومی',
@@ -609,8 +609,8 @@ export const translations = {
     outboundNames: {
       'Auto Select': '⚡ Автовыбор',
       'AI Auto': '🤖 AI Автовыбор',
-      'Node Select': '🐟 Резерв',
-      'Fall Back': '🐟 Резерв',
+      'Node Select': '🖐️ Ручной выбор',
+      'Fall Back': '⚡ Автовыбор',
       'Ad Block': '🛑 Блокировка рекламы',
       'AI Services': '💬 AI-сервисы',
       'Bilibili': '📺 Bilibili',

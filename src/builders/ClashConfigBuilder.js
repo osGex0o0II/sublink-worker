@@ -486,26 +486,6 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
 
         const existingNames = new Set((this.config['proxy-groups'] || []).map(g => normalizeGroupName(g?.name)).filter(Boolean));
 
-        const manualProxyNames = proxies.map(p => p?.name).filter(Boolean);
-        const manualGroupName = manualProxyNames.length > 0 ? this.t('outboundNames.Manual Switch') : null;
-        if (manualGroupName) {
-            const manualNorm = normalizeGroupName(manualGroupName);
-            if (!existingNames.has(manualNorm)) {
-                const group = asHiddenGroup({
-                    name: manualGroupName,
-                    type: 'select',
-                    proxies: manualProxyNames
-                });
-                // Add 'use' field if we have proxy-providers
-                const providerNames = this.getAllProviderNames();
-                if (providerNames.length > 0) {
-                    group.use = providerNames;
-                }
-                this.config['proxy-groups'].push(group);
-                existingNames.add(manualNorm);
-            }
-        }
-
         const countries = Object.keys(countryGroups).sort((a, b) => a.localeCompare(b));
         const countryGroupNames = [];
 
@@ -539,14 +519,13 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
                 proxyList: [],
                 translator: this.t,
                 groupByCountry: true,
-                manualGroupName,
                 countryGroupNames,
                 includeAutoSelect: this.shouldIncludeAutoSelectGroup(this.getProxyList())
             });
             nodeSelectGroup.proxies = rebuilt;
         }
         this.countryGroupNames = countryGroupNames;
-        this.manualGroupName = manualGroupName;
+        this.manualGroupName = null;
     }
 
     /**
@@ -663,7 +642,10 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
             ...site_rule_providers,
             ...ip_rule_providers
         };
-        const ruleResults = emitClashRules(rules, this.t);
+        const fallbackTarget = this.hasProxyGroup(this.t('outboundNames.Fall Back'))
+            ? this.t('outboundNames.Fall Back')
+            : this.t('outboundNames.Node Select');
+        const ruleResults = emitClashRules(rules, this.t, fallbackTarget);
 
         // Add proxy-providers if we have any
         if (this.providerUrls.length > 0) {
@@ -678,7 +660,7 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
 
         this.config.rules = [
             ...ruleResults,
-            `MATCH,${this.t('outboundNames.Fall Back')}`
+            `MATCH,${fallbackTarget}`
         ];
 
         // Enable Clash UI (external controller/dashboard) when requested or when custom UI params are provided

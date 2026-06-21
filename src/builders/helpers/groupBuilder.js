@@ -29,7 +29,6 @@ export function buildNodeSelectMembers({ proxyList = [], translator, groupByCoun
     const base = groupByCountry
         ? [
             ...(includeAutoSelect ? [autoName] : []),
-            ...(manualGroupName ? [manualGroupName] : []),
             ...countryGroupNames
         ]
         : [
@@ -43,15 +42,14 @@ export function buildSelectorMembers({ proxyList = [], translator, groupByCountr
     if (!translator) {
         throw new Error('buildSelectorMembers requires a translator function');
     }
+    const manualSelectName = translator('outboundNames.Node Select');
     const base = groupByCountry
         ? [
-            translator('outboundNames.Node Select'),
-            ...(includeAutoSelect ? [translator('outboundNames.Auto Select')] : []),
-            ...(manualGroupName ? [manualGroupName] : []),
+            manualSelectName,
             ...countryGroupNames
         ]
         : [
-            translator('outboundNames.Node Select'),
+            manualSelectName,
             ...proxyList
         ];
     return withDirectReject(base, { includeReject });
@@ -63,8 +61,6 @@ export function buildCustomRuleMembers({ proxyList = [], translator, manualGroup
     }
     return withDirectReject([
         translator('outboundNames.Node Select'),
-        ...(includeAutoSelect ? [translator('outboundNames.Auto Select')] : []),
-        ...(manualGroupName ? [manualGroupName] : []),
         ...proxyList
     ], { includeReject });
 }

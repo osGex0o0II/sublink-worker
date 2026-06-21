@@ -15,7 +15,7 @@ const AI_AUTO_EXPECTED_STATUS = '200-499';
 function getRuleTarget(rule, t) {
 	if (REJECT_ACTION_RULES.has(rule?.outbound) || rule?.outbound === 'REJECT') return 'REJECT';
 	if (DIRECT_DEFAULT_RULES.has(rule?.outbound)) return 'DIRECT';
-	if (NODE_SELECT_DEFAULT_RULES.has(rule?.outbound)) return t('outboundNames.Node Select');
+	if (NODE_SELECT_DEFAULT_RULES.has(rule?.outbound)) return t('outboundNames.Fall Back');
 	return t(`outboundNames.${rule.outbound}`);
 }
 
@@ -28,7 +28,7 @@ function escapeRegex(str) {
 
 /**
  * Build the member list suffix for a proxy group that references country groups.
- * Used by Node Select and rule outbound groups when groupByCountry is enabled.
+ * Used by manual selection and rule outbound groups when groupByCountry is enabled.
  */
 function buildCountryGroupRefs(countryGroupNames) {
 	return countryGroupNames.map(name => `[]${name}`).join('`');
@@ -107,10 +107,9 @@ export function generateSubconverterConfig({ selectedRules = [], customRules = [
 	// --- Proxy group lines ---
 	lines.push('');
 
-	const nodeSelectName = t('outboundNames.Node Select');
 	const autoSelectName = t('outboundNames.Auto Select');
 	const aiAutoName = t('outboundNames.AI Auto');
-	const manualSwitchName = t('outboundNames.Manual Switch');
+	const manualSelectName = t('outboundNames.Node Select');
 
 	// Pre-compute country group names and lines if groupByCountry is enabled
 	const countryGroupNames = [];
@@ -129,19 +128,19 @@ export function generateSubconverterConfig({ selectedRules = [], customRules = [
 		});
 	}
 
-	// Node Select group (top-level selector)
+	// Manual Select group (top-level selector)
 	if (groupByCountry) {
 		const refs = buildCountryGroupRefs(countryGroupNames);
 		if (includeAutoSelect) {
-			lines.push(`custom_proxy_group=${nodeSelectName}\`select\`[]${autoSelectName}\`[]${manualSwitchName}\`${refs}\`[]DIRECT`);
+			lines.push(`custom_proxy_group=${manualSelectName}\`select\`[]${autoSelectName}\`${refs}\`[]DIRECT`);
 		} else {
-			lines.push(`custom_proxy_group=${nodeSelectName}\`select\`[]${manualSwitchName}\`${refs}\`[]DIRECT`);
+			lines.push(`custom_proxy_group=${manualSelectName}\`select\`${refs}\`[]DIRECT`);
 		}
 	} else {
 		if (includeAutoSelect) {
-			lines.push(`custom_proxy_group=${nodeSelectName}\`select\`[]${autoSelectName}\`[]DIRECT\`.*`);
+			lines.push(`custom_proxy_group=${manualSelectName}\`select\`[]${autoSelectName}\`[]DIRECT\`.*`);
 		} else {
-			lines.push(`custom_proxy_group=${nodeSelectName}\`select\`[]DIRECT\`.*`);
+			lines.push(`custom_proxy_group=${manualSelectName}\`select\`[]DIRECT\`.*`);
 		}
 	}
 
@@ -154,19 +153,13 @@ export function generateSubconverterConfig({ selectedRules = [], customRules = [
 		lines.push(`custom_proxy_group=${aiAutoName}\`url-test\`.*\`${AI_AUTO_TEST_URL}\`300,,50\`${HIDDEN_GROUP_OPTION}\`expected-status=${AI_AUTO_EXPECTED_STATUS}`);
 	}
 
-	// Manual Switch group (when groupByCountry, provides access to all individual nodes)
-	if (groupByCountry) {
-		lines.push(`custom_proxy_group=${manualSwitchName}\`select\`.*\`${HIDDEN_GROUP_OPTION}`);
-	}
-
 	// Country groups (url-test per country with regex matching)
 	countryGroupLines.forEach(line => lines.push(line));
 
 	// Rule outbound groups
-	const processedGroups = new Set([nodeSelectName]);
+	const processedGroups = new Set([manualSelectName]);
 	if (includeAutoSelect) processedGroups.add(autoSelectName);
 	if (groupByCountry) {
-		processedGroups.add(manualSwitchName);
 		countryGroupNames.forEach(name => processedGroups.add(name));
 	}
 
@@ -179,35 +172,35 @@ export function generateSubconverterConfig({ selectedRules = [], customRules = [
 		if (REJECT_ACTION_RULES.has(rule.outbound)) {
 			lines.push(`custom_proxy_group=${groupName}\`select\`[]REJECT\`[]DIRECT`);
 		} else if (DIRECT_DEFAULT_RULES.has(rule.outbound)) {
-			lines.push(`custom_proxy_group=${groupName}\`select\`[]DIRECT\`[]${nodeSelectName}`);
+			lines.push(`custom_proxy_group=${groupName}\`select\`[]DIRECT\`[]${manualSelectName}`);
 		} else if (AI_AUTO_RULES.has(rule.outbound)) {
 			if (groupByCountry) {
 				const refs = buildCountryGroupRefs(countryGroupNames);
 				if (includeAutoSelect) {
-					lines.push(`custom_proxy_group=${groupName}\`select\`[]${aiAutoName}\`[]${nodeSelectName}\`[]${autoSelectName}\`[]${manualSwitchName}\`${refs}\`[]DIRECT`);
+					lines.push(`custom_proxy_group=${groupName}\`select\`[]${aiAutoName}\`[]${manualSelectName}\`[]${autoSelectName}\`${refs}\`[]DIRECT`);
 				} else {
-					lines.push(`custom_proxy_group=${groupName}\`select\`[]${aiAutoName}\`[]${nodeSelectName}\`[]${manualSwitchName}\`${refs}\`[]DIRECT`);
+					lines.push(`custom_proxy_group=${groupName}\`select\`[]${aiAutoName}\`[]${manualSelectName}\`${refs}\`[]DIRECT`);
 				}
 			} else {
 				if (includeAutoSelect) {
-					lines.push(`custom_proxy_group=${groupName}\`select\`[]${aiAutoName}\`[]${nodeSelectName}\`[]${autoSelectName}\`[]DIRECT\`.*`);
+					lines.push(`custom_proxy_group=${groupName}\`select\`[]${aiAutoName}\`[]${manualSelectName}\`[]${autoSelectName}\`[]DIRECT\`.*`);
 				} else {
-					lines.push(`custom_proxy_group=${groupName}\`select\`[]${aiAutoName}\`[]${nodeSelectName}\`[]DIRECT\`.*`);
+					lines.push(`custom_proxy_group=${groupName}\`select\`[]${aiAutoName}\`[]${manualSelectName}\`[]DIRECT\`.*`);
 				}
 			}
 		} else {
 			if (groupByCountry) {
 				const refs = buildCountryGroupRefs(countryGroupNames);
 				if (includeAutoSelect) {
-					lines.push(`custom_proxy_group=${groupName}\`select\`[]${nodeSelectName}\`[]${autoSelectName}\`[]${manualSwitchName}\`${refs}\`[]DIRECT`);
+					lines.push(`custom_proxy_group=${groupName}\`select\`[]${manualSelectName}\`[]${autoSelectName}\`${refs}\`[]DIRECT`);
 				} else {
-					lines.push(`custom_proxy_group=${groupName}\`select\`[]${nodeSelectName}\`[]${manualSwitchName}\`${refs}\`[]DIRECT`);
+					lines.push(`custom_proxy_group=${groupName}\`select\`[]${manualSelectName}\`${refs}\`[]DIRECT`);
 				}
 			} else {
 				if (includeAutoSelect) {
-					lines.push(`custom_proxy_group=${groupName}\`select\`[]${nodeSelectName}\`[]${autoSelectName}\`[]DIRECT\`.*`);
+					lines.push(`custom_proxy_group=${groupName}\`select\`[]${manualSelectName}\`[]${autoSelectName}\`[]DIRECT\`.*`);
 				} else {
-					lines.push(`custom_proxy_group=${groupName}\`select\`[]${nodeSelectName}\`[]DIRECT\`.*`);
+					lines.push(`custom_proxy_group=${groupName}\`select\`[]${manualSelectName}\`[]DIRECT\`.*`);
 				}
 			}
 		}
