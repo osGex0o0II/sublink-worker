@@ -199,8 +199,8 @@ export const formLogicFn = (t) => {
             },
 
             withoutBaseRules(rules = []) {
-                const mandatoryRules = Array.isArray(window.MANDATORY_RULES) ? window.MANDATORY_RULES : (Array.isArray(window.BASE_RULES) ? window.BASE_RULES : []);
-                return (Array.isArray(rules) ? rules : []).filter(rule => !mandatoryRules.includes(rule));
+                const hiddenRules = Array.isArray(window.HIDDEN_RULES) ? window.HIDDEN_RULES : (Array.isArray(window.MANDATORY_RULES) ? window.MANDATORY_RULES : (Array.isArray(window.BASE_RULES) ? window.BASE_RULES : []));
+                return (Array.isArray(rules) ? rules : []).filter(rule => !hiddenRules.includes(rule));
             },
 
             parseSavedRules(value) {

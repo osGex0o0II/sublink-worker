@@ -210,13 +210,7 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
     }
 
     addFallBackGroup(proxyList) {
-        const selectorMembers = this.buildSelectorMembers(proxyList);
-        if (this.hasOutboundTag(this.t('outboundNames.Fall Back'))) return;
-        this.config.outbounds.push({
-            type: "selector",
-            tag: this.t('outboundNames.Fall Back'),
-            outbounds: selectorMembers
-        });
+        return;
     }
 
     addCountryGroups() {

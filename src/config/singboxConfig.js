@@ -10,7 +10,7 @@ export const SING_BOX_CONFIG = {
 				type: "tcp",
 				tag: "dns_proxy",
 				server: "1.1.1.1",
-				detour: "🚀 节点选择",
+				detour: "🐟 漏网之鱼",
 				domain_resolver: "dns_resolver"
 			},
 			{
@@ -97,7 +97,7 @@ export const SING_BOX_CONFIG_V1_11 = {
 			{
 				tag: "dns_proxy",
 				address: "tls://1.1.1.1",
-				detour: "🚀 节点选择"
+				detour: "🐟 漏网之鱼"
 			},
 			{
 				tag: "dns_direct",

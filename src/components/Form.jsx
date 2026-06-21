@@ -1,6 +1,6 @@
 /** @jsxRuntime automatic */
 /** @jsxImportSource hono/jsx */
-import { DIRECT_DEFAULT_RULES, MANDATORY_RULES, PREDEFINED_RULE_SETS, UNIFIED_RULES } from '../config/index.js';
+import { DIRECT_DEFAULT_RULES, HIDDEN_RULES, MANDATORY_RULES, PREDEFINED_RULE_SETS, UNIFIED_RULES } from '../config/index.js';
 import { CustomRules } from './CustomRules.jsx';
 import { TextareaWithActions } from './TextareaWithActions.jsx';
 import { ValidatedTextarea } from './ValidatedTextarea.jsx';
@@ -79,6 +79,7 @@ export const Form = (props) => {
     window.APP_TRANSLATIONS = ${JSON.stringify(translations)};
     window.PREDEFINED_RULE_SETS = ${JSON.stringify(PREDEFINED_RULE_SETS)};
     window.MANDATORY_RULES = ${JSON.stringify(MANDATORY_RULES)};
+    window.HIDDEN_RULES = ${JSON.stringify(HIDDEN_RULES)};
     window.BASE_RULES = ${JSON.stringify(MANDATORY_RULES)};
     window.APP_LANG = ${JSON.stringify(lang || 'zh-CN')};
     if (typeof __name === 'undefined') { var __name = function(fn) { return fn; }; }
@@ -185,7 +186,7 @@ export const Form = (props) => {
   </div>
 
   <div x-show="selectedPredefinedRule === 'custom'" class="flex flex-wrap gap-2">
-    {UNIFIED_RULES.filter(rule => !MANDATORY_RULES.includes(rule.name)).map((rule) => (
+    {UNIFIED_RULES.filter(rule => !HIDDEN_RULES.includes(rule.name)).map((rule) => (
       <label class="flex items-center px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 hover:bg-primary-50 dark:hover:bg-primary-900/20 cursor-pointer transition-colors group">
         <input
           type="checkbox"

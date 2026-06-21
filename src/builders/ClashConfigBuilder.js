@@ -47,6 +47,11 @@ function getClashUdpValue(proxy, defaultEnabled = true) {
     return defaultEnabled;
 }
 
+const asHiddenGroup = (group) => ({
+    ...group,
+    hidden: true
+});
+
 export class ClashConfigBuilder extends BaseConfigBuilder {
     constructor(inputString, selectedRules, customRules, baseConfig, lang, userAgent, groupByCountry = false, enableClashUI = false, externalController, externalUiDownloadUrl, includeAutoSelect = true) {
         if (!baseConfig) {
@@ -340,14 +345,14 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
         const providerNames = this.getAllProviderNames();
         if (uniqueNames(proxyList).length === 0 && providerNames.length === 0) return;
 
-        const group = {
+        const group = asHiddenGroup({
             name: autoName,
             type: 'url-test',
             proxies: deepCopy(uniqueNames(proxyList)),
             url: 'https://www.gstatic.com/generate_204',
             interval: 300,
             lazy: false
-        };
+        });
 
         if (providerNames.length > 0) {
             group.use = providerNames;
@@ -406,14 +411,14 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
                         const autoName = this.t('outboundNames.AI Auto');
                         const aiCandidates = uniqueNames(proxyList);
                         if (aiCandidates.length > 0 && !this.hasProxyGroup(autoName)) {
-                            this.config['proxy-groups'].push({
+                            this.config['proxy-groups'].push(asHiddenGroup({
                                 type: "url-test",
                                 name: autoName,
                                 proxies: deepCopy(aiCandidates),
                                 url: AI_AUTO_TEST_URL,
                                 interval: 300,
                                 lazy: false
-                            });
+                            }));
                         }
                         if (aiCandidates.length > 0 || this.hasProxyGroup(autoName)) {
                             proxies = [autoName, ...proxies.filter(p => p !== autoName)];
@@ -467,20 +472,7 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
     }
 
     addFallBackGroup(proxyList) {
-        const name = this.t('outboundNames.Fall Back');
-        if (this.hasProxyGroup(name)) return;
-        const proxies = this.buildSelectGroupMembers(proxyList);
-        const group = {
-            type: "select",
-            name,
-            proxies
-        };
-        // Add 'use' field if we have proxy-providers
-        const providerNames = this.getAllProviderNames();
-        if (providerNames.length > 0) {
-            group.use = providerNames;
-        }
-        this.config['proxy-groups'].push(group);
+        return;
     }
 
     addCountryGroups() {
@@ -496,11 +488,11 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
         if (manualGroupName) {
             const manualNorm = normalizeGroupName(manualGroupName);
             if (!existingNames.has(manualNorm)) {
-                const group = {
+                const group = asHiddenGroup({
                     name: manualGroupName,
                     type: 'select',
                     proxies: manualProxyNames
-                };
+                });
                 // Add 'use' field if we have proxy-providers
                 const providerNames = this.getAllProviderNames();
                 if (providerNames.length > 0) {
@@ -519,14 +511,14 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
             const groupName = `${emoji} ${name}`;
             const norm = normalizeGroupName(groupName);
             if (!existingNames.has(norm)) {
-                const group = {
+                const group = asHiddenGroup({
                     name: groupName,
                     type: 'url-test',
                     proxies: proxies,
                     url: 'https://www.gstatic.com/generate_204',
                     interval: 300,
                     lazy: false
-                };
+                });
                 // Add 'use' field if we have proxy-providers
                 const providerNames = this.getAllProviderNames();
                 if (providerNames.length > 0) {

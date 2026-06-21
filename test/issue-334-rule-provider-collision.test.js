@@ -50,7 +50,7 @@ describe('Issue #334: rule-provider key collision fix', () => {
     // IP rules use -ip suffixed key
     expect(config.rules).toContainEqual(expect.stringMatching(/^RULE-SET,google-ip,.*谷歌.*no-resolve/));
     // Non-China should still work and route through Node Select without its own group
-    expect(config.rules).toContainEqual(expect.stringMatching(/^RULE-SET,geolocation-!cn,.*节点选择/));
+    expect(config.rules).toContainEqual(expect.stringMatching(/^RULE-SET,geolocation-!cn,.*漏网之鱼/));
   });
 
   it('google domain rule should come before non-china rule', async () => {

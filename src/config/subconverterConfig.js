@@ -9,6 +9,7 @@ import { COUNTRY_DATA } from '../utils.js';
 import { AI_AUTO_RULES, AI_AUTO_TEST_URL, DIRECT_DEFAULT_RULES, NODE_SELECT_DEFAULT_RULES, REJECT_ACTION_RULES, TRANSPARENT_RULES } from './rules.js';
 
 const SPEED_TEST_URL = 'http://www.gstatic.com/generate_204';
+const HIDDEN_GROUP_OPTION = 'hidden=true';
 
 function getRuleTarget(rule, t) {
 	if (REJECT_ACTION_RULES.has(rule?.outbound) || rule?.outbound === 'REJECT') return 'REJECT';
@@ -123,7 +124,7 @@ export function generateSubconverterConfig({ selectedRules = [], customRules = [
 				// Add word boundary for ASCII aliases to prevent substring matching (e.g. US matching AUS/RUS)
 				return /^[A-Za-z\s]+$/.test(a) ? `\\b${escaped}\\b` : escaped;
 			}).join('|');
-			countryGroupLines.push(`custom_proxy_group=${groupName}\`url-test\`(?i)(${regex})\`${SPEED_TEST_URL}\`300,,50`);
+			countryGroupLines.push(`custom_proxy_group=${groupName}\`url-test\`(?i)(${regex})\`${SPEED_TEST_URL}\`300,,50\`${HIDDEN_GROUP_OPTION}`);
 		});
 	}
 
@@ -145,16 +146,16 @@ export function generateSubconverterConfig({ selectedRules = [], customRules = [
 
 	// Auto Select group
 	if (includeAutoSelect) {
-		lines.push(`custom_proxy_group=${autoSelectName}\`url-test\`.*\`${SPEED_TEST_URL}\`300,,50`);
+		lines.push(`custom_proxy_group=${autoSelectName}\`url-test\`.*\`${SPEED_TEST_URL}\`300,,50\`${HIDDEN_GROUP_OPTION}`);
 	}
 
 	if (rules.some(rule => AI_AUTO_RULES.has(rule.outbound))) {
-		lines.push(`custom_proxy_group=${aiAutoName}\`url-test\`.*\`${AI_AUTO_TEST_URL}\`300,,50`);
+		lines.push(`custom_proxy_group=${aiAutoName}\`url-test\`.*\`${AI_AUTO_TEST_URL}\`300,,50\`${HIDDEN_GROUP_OPTION}`);
 	}
 
 	// Manual Switch group (when groupByCountry, provides access to all individual nodes)
 	if (groupByCountry) {
-		lines.push(`custom_proxy_group=${manualSwitchName}\`select\`.*`);
+		lines.push(`custom_proxy_group=${manualSwitchName}\`select\`.*\`${HIDDEN_GROUP_OPTION}`);
 	}
 
 	// Country groups (url-test per country with regex matching)
@@ -210,24 +211,6 @@ export function generateSubconverterConfig({ selectedRules = [], customRules = [
 			}
 		}
 	});
-
-	// Fall Back group (if not already created by a rule)
-	if (!processedGroups.has(fallBackName)) {
-		if (groupByCountry) {
-			const refs = buildCountryGroupRefs(countryGroupNames);
-			if (includeAutoSelect) {
-				lines.push(`custom_proxy_group=${fallBackName}\`select\`[]${nodeSelectName}\`[]${autoSelectName}\`[]${manualSwitchName}\`${refs}\`[]DIRECT`);
-			} else {
-				lines.push(`custom_proxy_group=${fallBackName}\`select\`[]${nodeSelectName}\`[]${manualSwitchName}\`${refs}\`[]DIRECT`);
-			}
-		} else {
-			if (includeAutoSelect) {
-				lines.push(`custom_proxy_group=${fallBackName}\`select\`[]${nodeSelectName}\`[]${autoSelectName}\`[]DIRECT\`.*`);
-			} else {
-				lines.push(`custom_proxy_group=${fallBackName}\`select\`[]${nodeSelectName}\`[]DIRECT\`.*`);
-			}
-		}
-	}
 
 	// Config flags
 	lines.push('');

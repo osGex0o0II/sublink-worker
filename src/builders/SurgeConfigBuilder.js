@@ -336,11 +336,7 @@ export class SurgeConfigBuilder extends BaseConfigBuilder {
     }
 
     addFallBackGroup(proxyList) {
-        const options = this.buildAggregatedOptions(proxyList);
-        if (this.hasProxyGroup(this.t('outboundNames.Fall Back'))) return;
-        this.config['proxy-groups'].push(
-            this.createProxyGroup(this.t('outboundNames.Fall Back'), 'select', options)
-        );
+        return;
     }
 
     addCountryGroups() {

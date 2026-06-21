@@ -34,6 +34,7 @@ describe('formLogic toString fix', () => {
       APP_TRANSLATIONS: {},
       PREDEFINED_RULE_SETS: {},
       MANDATORY_RULES: [],
+      HIDDEN_RULES: [],
       location: {
         href: 'https://example.com/',
         pathname: '/',

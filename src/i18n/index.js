@@ -117,8 +117,8 @@ export const translations = {
     outboundNames: {
       'Auto Select': '⚡ 自动选择',
       'AI Auto': '🤖 AI 自动选择',
-      'Node Select': '🚀 节点选择',
-      'Fall Back': '🌐 默认代理',
+      'Node Select': '🐟 漏网之鱼',
+      'Fall Back': '🐟 漏网之鱼',
       'Ad Block': '🛑 广告拦截',
       'AI Services': '💬 AI 服务',
       'Bilibili': '📺 哔哩哔哩',
@@ -285,8 +285,8 @@ export const translations = {
     outboundNames: {
       'Auto Select': '⚡ Auto Select',
       'AI Auto': '🤖 AI Auto',
-      'Node Select': '🚀 Node Select',
-      'Fall Back': '🌐 Default Proxy',
+      'Node Select': '🐟 Fall Back',
+      'Fall Back': '🐟 Fall Back',
       'Ad Block': '🛑 Ad Blocking',
       'AI Services': '💬 AI Services',
       'Bilibili': '📺 Bilibili',
@@ -447,8 +447,8 @@ export const translations = {
     outboundNames: {
       'Auto Select': '⚡ انتخاب خودکار',
       'AI Auto': '🤖 انتخاب خودکار AI',
-      'Node Select': '🚀 انتخاب نود',
-      'Fall Back': '🌐 پروکسی پیش‌فرض',
+      'Node Select': '🐟 فال بک',
+      'Fall Back': '🐟 فال بک',
       'Ad Block': '🛑 مسدودسازی تبلیغات',
       'AI Services': '💬 سرویس‌های هوش مصنوعی',
       'Bilibili': '📺 بیلی‌بیلی',
@@ -609,8 +609,8 @@ export const translations = {
     outboundNames: {
       'Auto Select': '⚡ Автовыбор',
       'AI Auto': '🤖 AI Автовыбор',
-      'Node Select': '🚀 Выбор узла',
-      'Fall Back': '🌐 Прокси по умолчанию',
+      'Node Select': '🐟 Резерв',
+      'Fall Back': '🐟 Резерв',
       'Ad Block': '🛑 Блокировка рекламы',
       'AI Services': '💬 AI-сервисы',
       'Bilibili': '📺 Bilibili',

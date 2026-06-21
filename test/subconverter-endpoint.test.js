@@ -150,12 +150,9 @@ describe('GET /subconverter', () => {
         const res = await app.request('http://localhost/subconverter?selectedRules=minimal');
         const text = await res.text();
 
-        // Node Select and Auto Select groups
-        expect(text).toMatch(/custom_proxy_group=.*节点选择.*select/);
+        // Fall Back contains auto selection first and manual nodes after it
+        expect(text).toMatch(/custom_proxy_group=.*漏网之鱼.*select/);
         expect(text).toMatch(/custom_proxy_group=.*自动选择.*url-test/);
-
-        // Default Proxy group
-        expect(text).toMatch(/custom_proxy_group=.*默认代理.*select/);
 
         // FINAL rule
         expect(text).toContain('[]FINAL');
@@ -179,9 +176,9 @@ describe('GET /subconverter', () => {
 
         expect(text).toContain('ruleset=DIRECT,[]GEOIP,private');
         expect(text).toContain('ruleset=DIRECT,[]GEOSITE,cn');
-        expect(text).toContain('ruleset=🚀 节点选择,[]GEOSITE,github');
-        expect(text).toContain('ruleset=🚀 节点选择,[]DOMAIN-SUFFIX,push.apple.com');
-        expect(text).toContain('ruleset=🚀 节点选择,[]GEOSITE,geolocation-!cn');
+        expect(text).toContain('ruleset=🐟 漏网之鱼,[]GEOSITE,github');
+        expect(text).toContain('ruleset=🐟 漏网之鱼,[]DOMAIN-SUFFIX,push.apple.com');
+        expect(text).toContain('ruleset=🐟 漏网之鱼,[]GEOSITE,geolocation-!cn');
         expect(text).not.toMatch(/custom_proxy_group=.*私有网络.*select/);
         expect(text).not.toMatch(/custom_proxy_group=.*国内服务.*select/);
         expect(text).not.toMatch(/custom_proxy_group=.*Github.*select/);
@@ -196,7 +193,7 @@ describe('GET /subconverter', () => {
         const text = await res.text();
 
         // Google group should reference Node Select
-        expect(text).toMatch(/custom_proxy_group=.*谷歌服务.*select.*\[].*节点选择/);
+        expect(text).toMatch(/custom_proxy_group=.*谷歌服务.*select.*\[].*漏网之鱼/);
     });
 
     it('respects include_auto_select=false', async () => {
@@ -208,7 +205,7 @@ describe('GET /subconverter', () => {
         expect(text).not.toMatch(/custom_proxy_group=.*自动选择.*url-test/);
 
         // Node Select should not reference Auto Select
-        const nodeSelectLine = text.split('\n').find(l => l.includes('节点选择') && l.includes('custom_proxy_group'));
+        const nodeSelectLine = text.split('\n').find(l => l.includes('漏网之鱼') && l.includes('custom_proxy_group'));
         expect(nodeSelectLine).toBeDefined();
         expect(nodeSelectLine).not.toContain('自动选择');
     });
@@ -233,9 +230,8 @@ describe('GET /subconverter', () => {
         const text = await res.text();
 
         // English translations
-        expect(text).toContain('Node Select');
         expect(text).toContain('Auto Select');
-        expect(text).toContain('Default Proxy');
+        expect(text).toContain('Fall Back');
     });
 
     describe('group_by_country=true', () => {
@@ -264,7 +260,7 @@ describe('GET /subconverter', () => {
             const res = await app.request('http://localhost/subconverter?selectedRules=minimal&group_by_country=true');
             const text = await res.text();
 
-            const nodeSelectLine = text.split('\n').find(l => l.includes('节点选择') && l.includes('`select`'));
+            const nodeSelectLine = text.split('\n').find(l => l.includes('漏网之鱼') && l.includes('`select`'));
             expect(nodeSelectLine).toBeDefined();
 
             // Should reference country groups
@@ -298,7 +294,7 @@ describe('GET /subconverter', () => {
             expect(text).not.toMatch(/custom_proxy_group=.*自动选择.*url-test/);
 
             // Node Select should reference Manual Switch and country groups but NOT Auto Select
-            const nodeSelectLine = text.split('\n').find(l => l.includes('节点选择') && l.includes('`select`'));
+            const nodeSelectLine = text.split('\n').find(l => l.includes('漏网之鱼') && l.includes('`select`'));
             expect(nodeSelectLine).toBeDefined();
             expect(nodeSelectLine).toContain('手动切换');
             expect(nodeSelectLine).not.toContain('自动选择');

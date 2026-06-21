@@ -62,9 +62,37 @@ proxies:
     const yamlText = await builder.build();
     const built = yaml.load(yamlText);
 
-    const nodeSelect = (built['proxy-groups'] || []).find(g => g && g.name === '🚀 节点选择');
+    const nodeSelect = (built['proxy-groups'] || []).find(g => g && g.name === '🐟 漏网之鱼');
     expect(nodeSelect).toBeDefined();
     expect(nodeSelect.use).toContain('my-provider');
+  });
+
+  it('should hide internal helper groups while keeping routing selectors visible', async () => {
+    const input = `
+ss://YWVzLTEyOC1nY206dGVzdA@example.com:443#HK-Node
+ss://YWVzLTEyOC1nY206dGVzdA@example.com:444#JP-Node
+    `;
+
+    const builder = new ClashConfigBuilder(input, ['AI Services', 'Google'], [], null, 'zh-CN', 'mihomo', true);
+    const yamlText = await builder.build();
+    const built = yaml.load(yamlText);
+
+    const groups = built['proxy-groups'] || [];
+    const visibleGroupNames = groups.filter(g => !g.hidden).map(g => g.name);
+    const hiddenGroupNames = groups.filter(g => g.hidden).map(g => g.name);
+
+    expect(visibleGroupNames).toEqual(expect.arrayContaining([
+      '🐟 漏网之鱼',
+      '💬 AI 服务',
+      '🔍 谷歌服务'
+    ]));
+    expect(hiddenGroupNames).toEqual(expect.arrayContaining([
+      '⚡ 自动选择',
+      '🤖 AI 自动选择',
+      '🖐️ 手动切换',
+      '🇭🇰 Hong Kong',
+      '🇯🇵 Japan'
+    ]));
   });
 
   it('sanitizeClashProxyGroups should not remove provider node references when group uses providers', () => {

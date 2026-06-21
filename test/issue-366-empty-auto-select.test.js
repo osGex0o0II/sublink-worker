@@ -16,7 +16,7 @@ describe('Issue #366 - avoid empty Auto Select groups', () => {
 
         const outbounds = builder.config.outbounds || [];
         const autoSelect = outbounds.find(outbound => outbound?.tag === '⚡ 自动选择');
-        const nodeSelect = outbounds.find(outbound => outbound?.tag === '🚀 节点选择');
+        const nodeSelect = outbounds.find(outbound => outbound?.tag === '🐟 漏网之鱼');
 
         expect(autoSelect).toBeUndefined();
         expect(nodeSelect).toBeDefined();

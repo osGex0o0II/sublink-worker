@@ -18,7 +18,7 @@ describe('Issue #256 - Custom rules should not bypass selector chain', () => {
     ];
 
     // Expected translated names for zh-CN locale
-    const NODE_SELECT = '🚀 节点选择';
+    const NODE_SELECT = '🐟 漏网之鱼';
     const AUTO_SELECT = '⚡ 自动选择';
 
     describe('SingboxConfigBuilder', () => {
