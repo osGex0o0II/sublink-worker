@@ -15,7 +15,7 @@ const AI_AUTO_EXPECTED_STATUS = '200-499';
 function getRuleTarget(rule, t) {
 	if (REJECT_ACTION_RULES.has(rule?.outbound) || rule?.outbound === 'REJECT') return 'REJECT';
 	if (DIRECT_DEFAULT_RULES.has(rule?.outbound)) return 'DIRECT';
-	if (NODE_SELECT_DEFAULT_RULES.has(rule?.outbound)) return t('outboundNames.Fall Back');
+	if (NODE_SELECT_DEFAULT_RULES.has(rule?.outbound)) return t('outboundNames.Node Select');
 	return t(`outboundNames.${rule.outbound}`);
 }
 
@@ -101,14 +101,13 @@ export function generateSubconverterConfig({ selectedRules = [], customRules = [
 	});
 
 	// FINAL rule
-	const fallBackName = t('outboundNames.Fall Back');
-	lines.push(`ruleset=${fallBackName},[]FINAL`);
+	const manualSelectName = t('outboundNames.Node Select');
+	lines.push(`ruleset=${manualSelectName},[]FINAL`);
 
 	// --- Proxy group lines ---
 	lines.push('');
 
 	const autoSelectName = t('outboundNames.Auto Select');
-	const manualSelectName = t('outboundNames.Node Select');
 
 	// Pre-compute country group names and lines if groupByCountry is enabled
 	const countryGroupNames = [];

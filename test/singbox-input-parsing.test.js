@@ -388,14 +388,18 @@ describe('Sing-Box JSON input parsing', () => {
         expect(result.route.rules).toEqual(expect.arrayContaining([
             expect.objectContaining({
                 domain_suffix: ['push.apple.com'],
-                outbound: '⚡ 自动选择'
+                outbound: '🖐️ 手动选择'
             })
         ]));
         expect(result.route.rules).toEqual(expect.arrayContaining([
             expect.objectContaining({ rule_set: ['private-ip'], outbound: 'DIRECT' }),
-            expect.objectContaining({ rule_set: ['github', 'gitlab'], outbound: '⚡ 自动选择' }),
-            expect.objectContaining({ rule_set: ['geolocation-!cn'], outbound: '⚡ 自动选择' }),
+            expect.objectContaining({ rule_set: ['github', 'gitlab'], outbound: '🖐️ 手动选择' }),
+            expect.objectContaining({ rule_set: ['geolocation-!cn'], outbound: '🖐️ 手动选择' }),
             expect.objectContaining({ rule_set: ['category-ai-!cn'], outbound: '💬 AI 服务' })
+        ]));
+        expect(result.route.final).toBe('🖐️ 手动选择');
+        expect(result.route.rules).toEqual(expect.arrayContaining([
+            expect.objectContaining({ clash_mode: 'global', outbound: '🖐️ 手动选择' })
         ]));
         expect(result.outbounds).toEqual(expect.arrayContaining([
             expect.objectContaining({
@@ -409,6 +413,8 @@ describe('Sing-Box JSON input parsing', () => {
                 outbounds: expect.arrayContaining(['⚡ 自动选择'])
             })
         ]));
+        const manualGroup = result.outbounds.find(outbound => outbound?.tag === '🖐️ 手动选择');
+        expect(manualGroup.outbounds[0]).toBe('⚡ 自动选择');
     });
 
     it('should always include Private and Location:CN as base rules', async () => {

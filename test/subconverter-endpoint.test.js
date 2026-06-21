@@ -178,9 +178,10 @@ describe('GET /subconverter', () => {
 
         expect(text).toContain('ruleset=DIRECT,[]GEOIP,private');
         expect(text).toContain('ruleset=DIRECT,[]GEOSITE,cn');
-        expect(text).toContain('ruleset=⚡ 自动选择,[]GEOSITE,github');
-        expect(text).toContain('ruleset=⚡ 自动选择,[]DOMAIN-SUFFIX,push.apple.com');
-        expect(text).toContain('ruleset=⚡ 自动选择,[]GEOSITE,geolocation-!cn');
+        expect(text).toContain('ruleset=🖐️ 手动选择,[]GEOSITE,github');
+        expect(text).toContain('ruleset=🖐️ 手动选择,[]DOMAIN-SUFFIX,push.apple.com');
+        expect(text).toContain('ruleset=🖐️ 手动选择,[]GEOSITE,geolocation-!cn');
+        expect(text).toContain('ruleset=🖐️ 手动选择,[]FINAL');
         expect(text).not.toMatch(/custom_proxy_group=.*私有网络.*select/);
         expect(text).not.toMatch(/custom_proxy_group=.*国内服务.*select/);
         expect(text).not.toMatch(/custom_proxy_group=.*Github.*select/);

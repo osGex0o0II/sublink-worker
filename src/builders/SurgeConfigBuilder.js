@@ -252,9 +252,7 @@ export class SurgeConfigBuilder extends BaseConfigBuilder {
     }
 
     getDefaultProxyTarget(proxyList = this.getProxyList()) {
-        return this.includeAutoSelect && this.sanitizeOptions(proxyList).length > 0
-            ? this.t('outboundNames.Fall Back')
-            : this.t('outboundNames.Node Select');
+        return this.t('outboundNames.Node Select');
     }
 
     addAutoSelectGroup(proxyList) {

@@ -629,9 +629,7 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
             ...site_rule_providers,
             ...ip_rule_providers
         };
-        const fallbackTarget = this.hasProxyGroup(this.t('outboundNames.Fall Back'))
-            ? this.t('outboundNames.Fall Back')
-            : this.t('outboundNames.Node Select');
+        const fallbackTarget = this.t('outboundNames.Node Select');
         const ruleResults = emitClashRules(rules, this.t, fallbackTarget);
 
         // Add proxy-providers if we have any

@@ -95,9 +95,7 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
     }
 
     getDefaultProxyTarget(proxyList = this.getProxyList()) {
-        return this.includeAutoSelect && this.hasAutoSelectCandidates(proxyList)
-            ? this.t('outboundNames.Fall Back')
-            : this.t('outboundNames.Node Select');
+        return this.t('outboundNames.Node Select');
     }
 
     updateDefaultDnsDetour(target) {

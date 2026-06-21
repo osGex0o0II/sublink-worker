@@ -137,13 +137,11 @@ ss://YWVzLTEyOC1nY206dGVzdA@example.com:444#US-Node-1
       'RULE-SET,private-ip,DIRECT,no-resolve',
       'RULE-SET,cn,DIRECT',
       'RULE-SET,cn-ip,DIRECT,no-resolve',
-      `RULE-SET,geolocation-!cn,${t('outboundNames.Fall Back')}`
+      `RULE-SET,geolocation-!cn,${t('outboundNames.Node Select')}`,
+      `MATCH,${t('outboundNames.Node Select')}`
     ]));
 
-    // Other groups should NOT default to DIRECT
-    const fallbackName = t('outboundNames.Auto Select');
-    const fallbackGroup = (built['proxy-groups'] || []).find(g => g && g.name === fallbackName);
-    expect(fallbackGroup).toBeDefined();
-    expect(fallbackGroup.proxies[0]).not.toBe('DIRECT');
+    const manualGroup = (built['proxy-groups'] || []).find(g => g && g.name === t('outboundNames.Node Select'));
+    expect(manualGroup.proxies[0]).toBe(t('outboundNames.Auto Select'));
   });
 });
