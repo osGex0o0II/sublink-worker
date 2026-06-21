@@ -10,6 +10,7 @@ import { AI_AUTO_RULES, AI_AUTO_TEST_URL, DIRECT_DEFAULT_RULES, NODE_SELECT_DEFA
 
 const SPEED_TEST_URL = 'http://www.gstatic.com/generate_204';
 const HIDDEN_GROUP_OPTION = 'hidden=true';
+const AI_AUTO_EXPECTED_STATUS = '200-499';
 
 function getRuleTarget(rule, t) {
 	if (REJECT_ACTION_RULES.has(rule?.outbound) || rule?.outbound === 'REJECT') return 'REJECT';
@@ -150,7 +151,7 @@ export function generateSubconverterConfig({ selectedRules = [], customRules = [
 	}
 
 	if (rules.some(rule => AI_AUTO_RULES.has(rule.outbound))) {
-		lines.push(`custom_proxy_group=${aiAutoName}\`url-test\`.*\`${AI_AUTO_TEST_URL}\`300,,50\`${HIDDEN_GROUP_OPTION}`);
+		lines.push(`custom_proxy_group=${aiAutoName}\`url-test\`.*\`${AI_AUTO_TEST_URL}\`300,,50\`${HIDDEN_GROUP_OPTION}\`expected-status=${AI_AUTO_EXPECTED_STATUS}`);
 	}
 
 	// Manual Switch group (when groupByCountry, provides access to all individual nodes)

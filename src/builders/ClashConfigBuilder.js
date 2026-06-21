@@ -52,6 +52,8 @@ const asHiddenGroup = (group) => ({
     hidden: true
 });
 
+const AI_AUTO_EXPECTED_STATUS = '200-499';
+
 export class ClashConfigBuilder extends BaseConfigBuilder {
     constructor(inputString, selectedRules, customRules, baseConfig, lang, userAgent, groupByCountry = false, enableClashUI = false, externalController, externalUiDownloadUrl, includeAutoSelect = true) {
         if (!baseConfig) {
@@ -416,6 +418,7 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
                                 name: autoName,
                                 proxies: deepCopy(aiCandidates),
                                 url: AI_AUTO_TEST_URL,
+                                'expected-status': AI_AUTO_EXPECTED_STATUS,
                                 interval: 300,
                                 lazy: false
                             }));

@@ -80,6 +80,7 @@ ss://YWVzLTEyOC1nY206dGVzdA@example.com:444#JP-Node
     const groups = built['proxy-groups'] || [];
     const visibleGroupNames = groups.filter(g => !g.hidden).map(g => g.name);
     const hiddenGroupNames = groups.filter(g => g.hidden).map(g => g.name);
+    const aiAutoGroup = groups.find(g => g.name === '🤖 AI 自动选择');
 
     expect(visibleGroupNames).toEqual(expect.arrayContaining([
       '🐟 漏网之鱼',
@@ -93,6 +94,7 @@ ss://YWVzLTEyOC1nY206dGVzdA@example.com:444#JP-Node
       '🇭🇰 Hong Kong',
       '🇯🇵 Japan'
     ]));
+    expect(aiAutoGroup?.['expected-status']).toBe('200-499');
   });
 
   it('sanitizeClashProxyGroups should not remove provider node references when group uses providers', () => {
