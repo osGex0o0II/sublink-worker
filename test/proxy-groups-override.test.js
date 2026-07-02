@@ -297,7 +297,7 @@ proxy-groups:
             // Should keep our generated template instead of preserving stale imported settings.
             expect(autoGroups[0].proxies).toContain('HK-Node');
             expect(autoGroups[0].interval).toBe(300);
-            expect(autoGroups[0].url).toBe('https://api.openai.com/v1/models');
+            expect(autoGroups[0].url).toBe('https://www.gstatic.com/generate_204');
             expect(autoGroups[0]['expected-status']).toBe('200-499');
         });
 

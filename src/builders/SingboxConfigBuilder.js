@@ -1,7 +1,7 @@
 
 import { SING_BOX_CONFIG, generateRuleSets, generateRules, getOutbounds, PREDEFINED_RULE_SETS, AI_AUTO_TEST_URL, DIRECT_DEFAULT_RULES, NODE_SELECT_DEFAULT_RULES, REJECT_ACTION_RULES, SITE_RULE_SET_BASE_URL, IP_RULE_SET_BASE_URL, SITE_RULE_SETS, IP_RULE_SETS, TRANSPARENT_RULES } from '../config/index.js';
 import { BaseConfigBuilder } from './BaseConfigBuilder.js';
-import { deepCopy, groupProxiesByCountry } from '../utils.js';
+import { deepCopy, generateWebPath, groupProxiesByCountry } from '../utils.js';
 import { addProxyWithDedup } from './helpers/proxyHelpers.js';
 import { buildSelectorMembers as buildSelectorMemberList, buildNodeSelectMembers, buildCustomRuleMembers, uniqueNames } from './helpers/groupBuilder.js';
 import { normalizeGroupName } from './helpers/groupNameUtils.js';
@@ -685,7 +685,8 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
                 tag,
                 type: 'remote',
                 format: 'binary',
-                url: `${SITE_RULE_SET_BASE_URL}${sitePath}`
+                url: `${SITE_RULE_SET_BASE_URL}${sitePath}`,
+                download_detour: 'DIRECT'
             });
             tagSet.add(tag);
             return;
@@ -697,7 +698,8 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
                 tag,
                 type: 'remote',
                 format: 'binary',
-                url: `${IP_RULE_SET_BASE_URL}${IP_RULE_SETS[ipRuleName]}`
+                url: `${IP_RULE_SET_BASE_URL}${IP_RULE_SETS[ipRuleName]}`,
+                download_detour: 'DIRECT'
             });
             tagSet.add(tag);
         }
@@ -830,10 +832,9 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
         // 如果启用了 Clash UI，添加配置
         // 如果启用 Clash UI 或传入了自定义参数，添加/覆盖 Clash API 配置
         if (this.enableClashUI || this.externalController || this.externalUiDownloadUrl) {
-            const defaultExternalController = "0.0.0.0:9090";
+            const defaultExternalController = "127.0.0.1:9090";
             const defaultExternalUiDownloadUrl = "https://gh-proxy.com/https://github.com/Zephyruso/zashboard/archive/refs/heads/gh-pages.zip";
             const defaultExternalUi = "./ui";
-            const defaultSecret = "";
             const defaultDownloadDetour = "DIRECT";
             const defaultClashMode = "rule";
 
@@ -843,7 +844,7 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
             const externalController = this.externalController || existingClashApi.external_controller || defaultExternalController;
             const externalUiDownloadUrl = this.externalUiDownloadUrl || existingClashApi.external_ui_download_url || defaultExternalUiDownloadUrl;
             const externalUi = existingClashApi.external_ui || defaultExternalUi;
-            const secret = existingClashApi.secret ?? defaultSecret;
+            const secret = existingClashApi.secret || generateWebPath(24);
             const externalUiDownloadDetour = existingClashApi.external_ui_download_detour || defaultDownloadDetour;
             const clashMode = existingClashApi.default_mode || defaultClashMode;
 

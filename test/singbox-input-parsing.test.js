@@ -405,7 +405,7 @@ describe('Sing-Box JSON input parsing', () => {
             expect.objectContaining({
                 type: 'urltest',
                 tag: '⚡ 自动选择',
-                url: 'https://api.openai.com/v1/models'
+                url: 'https://www.gstatic.com/generate_204'
             }),
             expect.objectContaining({
                 type: 'selector',

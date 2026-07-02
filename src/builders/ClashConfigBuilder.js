@@ -1,7 +1,7 @@
 import yaml from 'js-yaml';
 import { CLASH_CONFIG, generateRules, generateClashRuleSets, getOutbounds, PREDEFINED_RULE_SETS, AI_AUTO_TEST_URL, DIRECT_DEFAULT_RULES, TRANSPARENT_RULES } from '../config/index.js';
 import { BaseConfigBuilder } from './BaseConfigBuilder.js';
-import { deepCopy, groupProxiesByCountry } from '../utils.js';
+import { deepCopy, generateWebPath, groupProxiesByCountry } from '../utils.js';
 import { addProxyWithDedup } from './helpers/proxyHelpers.js';
 import { buildSelectorMembers, buildNodeSelectMembers, buildCustomRuleMembers, uniqueNames } from './helpers/groupBuilder.js';
 import { emitClashRules, sanitizeClashProxyGroups } from './helpers/clashConfigUtils.js';
@@ -650,17 +650,16 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
 
         // Enable Clash UI (external controller/dashboard) when requested or when custom UI params are provided
         if (this.enableClashUI || this.externalController || this.externalUiDownloadUrl) {
-            const defaultController = '0.0.0.0:9090';
+            const defaultController = '127.0.0.1:9090';
             const defaultUiPath = './ui';
             const defaultUiName = 'zashboard';
             const defaultUiUrl = 'https://gh-proxy.com/https://github.com/Zephyruso/zashboard/archive/refs/heads/gh-pages.zip';
-            const defaultSecret = '';
 
             const controller = this.externalController || this.config['external-controller'] || defaultController;
             const uiPath = this.config['external-ui'] || defaultUiPath;
             const uiName = this.config['external-ui-name'] || defaultUiName;
             const uiUrl = this.externalUiDownloadUrl || this.config['external-ui-url'] || defaultUiUrl;
-            const secret = this.config['secret'] ?? defaultSecret;
+            const secret = this.config['secret'] || generateWebPath(24);
 
             this.config['external-controller'] = controller;
             this.config['external-ui'] = uiPath;

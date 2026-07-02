@@ -2,22 +2,28 @@ import { html } from 'hono/html'
 import { APP_KEYWORDS } from '../constants.js';
 
 export const Layout = (props) => {
-  const { title, children } = props
+  const {
+    title,
+    children,
+    description = 'Convert and optimize your subscription links easily',
+    keywords = APP_KEYWORDS,
+    lang = 'en-US'
+  } = props
+  const dir = lang === 'fa' ? 'rtl' : 'ltr'
   return html`
     <!DOCTYPE html>
-    <html lang="en" x-data="appData()">
+    <html lang="${lang}" dir="${dir}" x-data="appData()">
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>${title}</title>
-        <meta name="description" content="Convert and optimize your subscription links easily" />
-        <meta name="keywords" content="${APP_KEYWORDS}" />
+        <meta name="description" content="${description}" />
+        <meta name="keywords" content="${keywords}" />
         <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-        <script src="https://cdn.tailwindcss.com"></script>
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
-        <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
-        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.10/dist/cdn.min.js" onerror="window.__alpineFailed=true"></script>
+        <link href="/styles.css" rel="stylesheet" />
+        <link href="/vendor/fontawesome/css/all.min.css" rel="stylesheet" />
+        <script src="/vendor/js-yaml/js-yaml.min.js"></script>
+        <script defer src="/vendor/alpinejs/cdn.min.js" onerror="window.__alpineFailed=true"></script>
         <script>
           window.__alpineLoaded = false;
           document.addEventListener('alpine:init', () => { window.__alpineLoaded = true; });
@@ -30,38 +36,6 @@ export const Layout = (props) => {
               document.body.appendChild(warning);
             }
           });
-        </script>
-        <script>
-          tailwind.config = {
-            darkMode: 'class',
-            theme: {
-              extend: {
-                colors: {
-                  primary: {
-                    50: '#eef9ff',
-                    100: '#dcf2ff',
-                    200: '#b2e6ff',
-                    300: '#6ed4ff',
-                    400: '#33c5ff', // Spaceship Blue
-                    500: '#0aa3eb',
-                    600: '#0082ca',
-                    700: '#0068a3',
-                    800: '#005887',
-                    900: '#06496f',
-                    950: '#042f4a',
-                  },
-                  gray: {
-                    850: '#1f2937',
-                    900: '#111827',
-                    950: '#0b0f19', // Deep dark for background
-                  }
-                },
-                fontFamily: {
-                  sans: ['Inter', 'sans-serif'],
-                }
-              }
-            }
-          }
         </script>
         <style>
           body {

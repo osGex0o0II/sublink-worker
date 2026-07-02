@@ -25,11 +25,16 @@ export class ProxyParser {
             return undefined;
         }
         const trimmed = url.trim();
-        const type = trimmed.split('://')[0];
+        const type = trimmed.split('://')[0].toLowerCase();
         const parser = protocolParsers[type];
         if (!parser) {
             return undefined;
         }
-        return parser(trimmed, userAgent);
+        try {
+            return await parser(trimmed, userAgent);
+        } catch (error) {
+            console.warn(`Failed to parse ${type} proxy:`, error?.message || error);
+            return undefined;
+        }
     }
 }

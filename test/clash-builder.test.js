@@ -94,7 +94,7 @@ ss://YWVzLTEyOC1nY206dGVzdA@example.com:444#JP-Node
       '🇯🇵 Japan'
     ]));
     expect(hiddenGroupNames).not.toContain('🤖 AI 自动选择');
-    expect(autoGroup?.url).toBe('https://api.openai.com/v1/models');
+    expect(autoGroup?.url).toBe('https://www.gstatic.com/generate_204');
     expect(autoGroup?.['expected-status']).toBe('200-499');
     expect(aiGroup?.proxies[0]).toBe('⚡ 自动选择');
   });

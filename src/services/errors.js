@@ -26,3 +26,10 @@ export class InvalidConfigError extends ServiceError {
         this.name = 'InvalidConfigError';
     }
 }
+
+export class ConflictError extends ServiceError {
+    constructor(message = 'Resource already exists') {
+        super(message, 409);
+        this.name = 'ConflictError';
+    }
+}

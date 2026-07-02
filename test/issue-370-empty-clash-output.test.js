@@ -59,6 +59,35 @@ describe('Issues #370/#373/#277 - remote subscription decode and empty Clash out
         expect(result.content).toContain('HK-Plain');
     });
 
+    it('keeps the original subscription URL for provider output after redirects', async () => {
+        vi.stubGlobal('fetch', vi.fn(async (url) => {
+            if (String(url).includes('short.example.com')) {
+                return {
+                    status: 302,
+                    headers: {
+                        get: (name) => name.toLowerCase() === 'location'
+                            ? 'https://cdn.example.com/final-clash.yaml'
+                            : null
+                    }
+                };
+            }
+            return {
+                ok: true,
+                status: 200,
+                text: async () => plainClashYaml,
+                headers: {
+                    get: () => null
+                }
+            };
+        }));
+
+        const result = await fetchSubscriptionWithFormat('https://short.example.com/sub?token=abc', 'test-agent');
+
+        expect(result.format).toBe('clash');
+        expect(result.url).toBe('https://short.example.com/sub?token=abc');
+        expect(result.finalUrl).toBe('https://cdn.example.com/final-clash.yaml');
+    });
+
     it('uses a plain Clash subscription URL as provider instead of emitting empty url-test groups', async () => {
         mockFetchText(plainClashYaml);
 

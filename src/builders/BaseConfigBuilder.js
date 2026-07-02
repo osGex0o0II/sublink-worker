@@ -5,6 +5,8 @@ import { generateRules, getOutbounds, PREDEFINED_RULE_SETS } from '../config/ind
 import { isInformationalProxy } from './helpers/proxyHelpers.js';
 import { isSystemGeneratedGroupName } from './helpers/groupNameUtils.js';
 
+const MAX_REMOTE_SUBSCRIPTIONS = 8;
+
 export class BaseConfigBuilder {
     constructor(inputString, baseConfig, lang, userAgent, groupByCountry = false, includeAutoSelect = true) {
         this.inputString = inputString;
@@ -31,6 +33,7 @@ export class BaseConfigBuilder {
     async parseCustomItems() {
         const input = this.inputString || '';
         const parsedItems = [];
+        let remoteSubscriptionCount = 0;
 
         // Import the content parser for direct input parsing
         const { parseSubscriptionContent } = await import('../parsers/subscription/subscriptionContentParser.js');
@@ -90,6 +93,12 @@ export class BaseConfigBuilder {
 
                 // Check if it's an HTTP(S) URL - may use as provider if format matches
                 if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
+                    remoteSubscriptionCount += 1;
+                    if (remoteSubscriptionCount > MAX_REMOTE_SUBSCRIPTIONS) {
+                        console.warn(`Skipping remote subscription after ${MAX_REMOTE_SUBSCRIPTIONS} URLs`);
+                        continue;
+                    }
+
                     const { fetchSubscriptionWithFormat } = await import('../parsers/subscription/httpSubscriptionFetcher.js');
 
                     try {

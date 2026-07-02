@@ -1,5 +1,6 @@
 import { decodeBase64 } from '../../utils.js';
 import { parseSubscriptionContent } from './subscriptionContentParser.js';
+import { fetchTextResource } from './safeFetch.js';
 
 const SUBSCRIPTION_URI_PATTERN = /^(ss|vmess|vless|hysteria|hysteria2|hy2|trojan|tuic|anytls|http|https):\/\//i;
 
@@ -128,14 +129,7 @@ export async function fetchSubscription(url, userAgent) {
         if (userAgent) {
             headers.set('User-Agent', userAgent);
         }
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: headers
-        });
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const text = await response.text();
+        const { text } = await fetchTextResource(url, { headers });
         const decodedText = decodeContent(text);
 
         return parseSubscriptionContent(decodedText);
@@ -149,7 +143,7 @@ export async function fetchSubscription(url, userAgent) {
  * Fetch subscription content and detect its format without parsing
  * @param {string} url - The subscription URL to fetch
  * @param {string} userAgent - Optional User-Agent header
- * @returns {Promise<{content: string, format: 'clash'|'singbox'|'surge'|'unknown', url: string, subscriptionUserinfo?: string}|null>}
+ * @returns {Promise<{content: string, format: 'clash'|'singbox'|'surge'|'unknown', url: string, finalUrl?: string, subscriptionUserinfo?: string}|null>}
  */
 export async function fetchSubscriptionWithFormat(url, userAgent) {
     try {
@@ -157,20 +151,14 @@ export async function fetchSubscriptionWithFormat(url, userAgent) {
         if (userAgent) {
             headers.set('User-Agent', userAgent);
         }
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: headers
-        });
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const text = await response.text();
+        const result = await fetchTextResource(url, { headers });
+        const { text } = result;
         const content = decodeContent(text);
         const format = detectFormat(content);
 
-        const subscriptionUserinfo = response.headers.get('subscription-userinfo') || undefined;
+        const subscriptionUserinfo = result.headers.get('subscription-userinfo') || undefined;
 
-        return { content, format, url, subscriptionUserinfo };
+        return { content, format, url, finalUrl: result.url, subscriptionUserinfo };
     } catch (error) {
         console.error('Error fetching subscription:', error);
         return null;

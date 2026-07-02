@@ -15,10 +15,13 @@
 
 ## 快速开始
 
+要求 Node.js 22 或更高版本。
+
 ### Cloudflare Workers
 
 ```bash
 npm install
+npm run build
 npm run deploy
 ```
 
@@ -26,6 +29,7 @@ npm run deploy
 
 ```bash
 npm install
+npm run build
 npm run dev
 npm test
 ```

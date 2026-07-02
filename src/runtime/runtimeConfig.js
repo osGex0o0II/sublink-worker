@@ -24,7 +24,8 @@
  */
 
 const DEFAULTS = {
-    configTtlSeconds: 60 * 60 * 24 * 30
+    configTtlSeconds: 60 * 60 * 24 * 30,
+    shortLinkTtlSeconds: 60 * 60 * 24 * 30
 };
 
 /**
@@ -40,7 +41,7 @@ export function normalizeRuntime(runtime = {}) {
         logger: runtime.logger ?? console,
         config: {
             configTtlSeconds: runtime.config?.configTtlSeconds ?? DEFAULTS.configTtlSeconds,
-            shortLinkTtlSeconds: runtime.config?.shortLinkTtlSeconds ?? null
+            shortLinkTtlSeconds: runtime.config?.shortLinkTtlSeconds ?? DEFAULTS.shortLinkTtlSeconds
         }
     };
 }

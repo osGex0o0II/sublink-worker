@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { createApp } from '../src/app/createApp.jsx';
 import { MemoryKVAdapter } from '../src/adapters/kv/memoryKv.js';
+import yaml from 'js-yaml';
 
 const createTestApp = (overrides = {}) => {
     const runtime = {
@@ -24,6 +25,13 @@ describe('Worker', () => {
         expect(res.headers.get('content-type')).toContain('text/html');
         const text = await res.text();
         expect(text).toContain('Sublink Worker');
+        expect(text).toContain('/styles.css');
+        expect(text).toContain('/vendor/fontawesome/css/all.min.css');
+        expect(text).toContain('/vendor/js-yaml/js-yaml.min.js');
+        expect(text).toContain('/vendor/alpinejs/cdn.min.js');
+        expect(text).not.toContain('cdn.tailwindcss.com');
+        expect(res.headers.get('content-security-policy')).toContain("default-src 'self'");
+        expect(res.headers.get('strict-transport-security')).toContain('max-age=31536000');
     });
 
     it('GET /singbox returns JSON', async () => {
@@ -77,6 +85,26 @@ describe('Worker', () => {
         expect(text).toContain('proxies:');
     });
 
+    it('GET /singbox ignores malformed proxy links without exposing parser internals', async () => {
+        const app = createTestApp();
+        const res = await app.request(`http://localhost/singbox?config=${encodeURIComponent('vmess://not-base64')}`);
+
+        expect(res.status).not.toBe(500);
+        const text = await res.text();
+        expect(text).not.toContain('Unexpected token');
+    });
+
+    it('Clash API uses loopback controller and generated secret by default', async () => {
+        const app = createTestApp();
+        const config = 'ss://YWVzLTEyOC1nY206dGVzdA@example.com:443#HK-Test';
+        const res = await app.request(`http://localhost/clash?config=${encodeURIComponent(config)}&enable_clash_ui=true`);
+
+        expect(res.status).toBe(200);
+        const parsed = yaml.load(await res.text());
+        expect(parsed['external-controller']).toBe('127.0.0.1:9090');
+        expect(parsed.secret).toMatch(/^[A-Za-z0-9]{24}$/);
+    });
+
     it('GET /clash rejects empty url-test proxy groups with a diagnostic error', async () => {
         const app = createTestApp();
         const config = `
@@ -101,7 +129,7 @@ proxy-groups:
     });
 
     it('GET /shorten-v2 returns short code', async () => {
-        const url = 'http://example.com';
+        const url = 'http://example.com/singbox?config=test';
         const kvMock = {
             put: vi.fn(async () => {}),
             get: vi.fn(async () => null),
@@ -113,5 +141,87 @@ proxy-groups:
         const text = await res.text();
         expect(text).toBeTruthy();
         expect(kvMock.put).toHaveBeenCalled();
+    });
+
+    it('GET /shorten-v2 rejects URLs without query parameters', async () => {
+        const app = createTestApp();
+        const res = await app.request(`http://localhost/shorten-v2?url=${encodeURIComponent('http://example.com')}`);
+
+        expect(res.status).toBe(400);
+        expect(await res.text()).toContain('query parameters');
+    });
+
+    it('GET /shorten-v2 rejects duplicate custom short codes', async () => {
+        const app = createTestApp();
+        const firstUrl = encodeURIComponent('http://example.com/singbox?config=one');
+        const secondUrl = encodeURIComponent('http://example.com/clash?config=two');
+
+        const first = await app.request(`http://localhost/shorten-v2?url=${firstUrl}&shortCode=fixed-code`);
+        const second = await app.request(`http://localhost/shorten-v2?url=${secondUrl}&shortCode=fixed-code`);
+
+        expect(first.status).toBe(200);
+        expect(second.status).toBe(409);
+    });
+
+    it('one short code resolves to each output endpoint prefix', async () => {
+        const app = createTestApp();
+        const fullUrl = 'http://example.com/singbox?config=ss%3A%2F%2Ftest';
+
+        const shorten = await app.request(`http://localhost/shorten-v2?url=${encodeURIComponent(fullUrl)}`);
+        expect(shorten.status).toBe(200);
+        const code = await shorten.text();
+
+        const expectations = {
+            x: '/xray?config=ss%3A%2F%2Ftest',
+            b: '/singbox?config=ss%3A%2F%2Ftest',
+            c: '/clash?config=ss%3A%2F%2Ftest',
+            s: '/surge?config=ss%3A%2F%2Ftest'
+        };
+
+        for (const [prefix, target] of Object.entries(expectations)) {
+            const res = await app.request(`http://localhost/${prefix}/${code}`);
+            expect(res.status).toBe(302);
+            expect(res.headers.get('location')).toBe(`http://localhost${target}`);
+        }
+    });
+
+    it('POST /config stores allowed config types with a scoped ID', async () => {
+        const app = createTestApp();
+        const res = await app.request('http://localhost/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type: 'singbox',
+                content: { outbounds: [], route: { rules: [] } }
+            })
+        });
+
+        expect(res.status).toBe(200);
+        expect(await res.text()).toMatch(/^singbox_[A-Za-z0-9]{8}$/);
+    });
+
+    it('POST /config rejects unsupported config types', async () => {
+        const app = createTestApp();
+        const res = await app.request('http://localhost/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type: 'other',
+                content: { ok: true }
+            })
+        });
+
+        expect(res.status).toBe(400);
+    });
+
+    it('POST /config rejects non-object JSON payloads', async () => {
+        const app = createTestApp();
+        const res = await app.request('http://localhost/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: 'null'
+        });
+
+        expect(res.status).toBe(400);
     });
 });

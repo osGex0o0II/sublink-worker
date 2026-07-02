@@ -452,47 +452,28 @@ export const formLogicFn = (t) => {
                     const origin = window.location.origin;
                     const shortened = {};
 
-                    // Use custom short code if provided, otherwise let backend generate it once
-                    let shortCode = this.customShortCode.trim();
-                    let isFirstRequest = true;
+                    const firstUrl = Object.values(this.generatedLinks)[0];
+                    let apiUrl = `${origin}/shorten-v2?url=${encodeURIComponent(firstUrl)}`;
+                    const customCode = this.customShortCode.trim();
+                    if (customCode) {
+                        apiUrl += `&shortCode=${encodeURIComponent(customCode)}`;
+                    }
 
-                    // Shorten each link type
-                    for (const [type, url] of Object.entries(this.generatedLinks)) {
-                        try {
-                            let apiUrl = `${origin}/shorten-v2?url=${encodeURIComponent(url)}`;
+                    const response = await fetch(apiUrl);
+                    if (!response.ok) {
+                        throw new Error('Failed to shorten links');
+                    }
+                    const returnedCode = await response.text();
 
-                            // For the first request, either use custom code or let backend generate
-                            // For subsequent requests, use the code from first request
-                            if (shortCode) {
-                                apiUrl += `&shortCode=${encodeURIComponent(shortCode)}`;
-                            }
+                    const prefixMap = {
+                        xray: 'x',
+                        singbox: 'b',
+                        clash: 'c',
+                        surge: 's'
+                    };
 
-                            const response = await fetch(apiUrl);
-                            if (!response.ok) {
-                                throw new Error(`Failed to shorten ${type} link`);
-                            }
-                            const returnedCode = await response.text();
-
-                            // If this is the first request and no custom code was provided,
-                            // use the backend-generated code for all subsequent requests
-                            if (isFirstRequest && !shortCode) {
-                                shortCode = returnedCode;
-                            }
-                            isFirstRequest = false;
-
-                            // Map types to their corresponding path prefixes
-                            const prefixMap = {
-                                xray: 'x',
-                                singbox: 'b',
-                                clash: 'c',
-                                surge: 's'
-                            };
-
-                            shortened[type] = `${origin}/${prefixMap[type]}/${returnedCode}`;
-                        } catch (error) {
-                            console.error(`Error shortening ${type} link:`, error);
-                            throw error;
-                        }
+                    for (const type of Object.keys(this.generatedLinks)) {
+                        shortened[type] = `${origin}/${prefixMap[type]}/${returnedCode}`;
                     }
 
                     this.shortenedLinks = shortened;

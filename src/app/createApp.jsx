@@ -17,8 +17,35 @@ import { ConfigStorageService } from '../services/configStorageService.js';
 import { ServiceError, MissingDependencyError } from '../services/errors.js';
 import { normalizeRuntime } from '../runtime/runtimeConfig.js';
 import { PREDEFINED_RULE_SETS, SING_BOX_CONFIG, SING_BOX_CONFIG_V1_11, generateSubconverterConfig } from '../config/index.js';
+import { fetchTextResource } from '../parsers/subscription/safeFetch.js';
 
 const DEFAULT_USER_AGENT = 'curl/7.74.0';
+const MAX_XRAY_REMOTE_SUBSCRIPTIONS = 8;
+const MAX_CONFIG_BODY_BYTES = 1024 * 1024;
+const RATE_LIMITS = {
+    shortLinks: { limit: 60, windowSeconds: 60 },
+    configWrites: { limit: 20, windowSeconds: 60 }
+};
+const SECURITY_HEADERS = {
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'same-origin',
+    'X-Frame-Options': 'SAMEORIGIN',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+    'Content-Security-Policy': [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline'",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data:",
+        "font-src 'self' data:",
+        "connect-src 'self' https://api.github.com",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        "frame-ancestors 'self'",
+        'upgrade-insecure-requests'
+    ].join('; ')
+};
 
 export function createApp(bindings = {}) {
     const runtime = normalizeRuntime(bindings);
@@ -30,6 +57,7 @@ export function createApp(bindings = {}) {
     const app = new Hono();
 
     app.use('*', async (c, next) => {
+        applySecurityHeaders(c);
         const acceptLanguage = getRequestHeader(c.req, 'Accept-Language');
         const lang = c.req.query('lang') || acceptLanguage?.split(',')[0] || 'zh-CN';
         c.set('lang', lang);
@@ -43,7 +71,7 @@ export function createApp(bindings = {}) {
         const subtitle = APP_SUBTITLE[lang] || APP_SUBTITLE['zh-CN'];
 
         return c.html(
-            <Layout title={t('pageTitle')} description={t('pageDescription')} keywords={t('pageKeywords')}>
+            <Layout title={t('pageTitle')} description={t('pageDescription')} keywords={t('pageKeywords')} lang={lang}>
                 <div class="flex flex-col min-h-screen">
                     <Navbar />
                     <main class="flex-1">
@@ -269,6 +297,7 @@ export function createApp(bindings = {}) {
         const proxylist = inputString.split('\n');
         const finalProxyList = [];
         let subscriptionUserinfo;
+        let remoteSubscriptionCount = 0;
         const userAgent = c.req.query('ua') || getRequestHeader(c.req, 'User-Agent') || DEFAULT_USER_AGENT;
         const headers = { 'User-Agent': userAgent };
 
@@ -277,13 +306,18 @@ export function createApp(bindings = {}) {
             if (!trimmedProxy) continue;
 
             if (trimmedProxy.startsWith('http://') || trimmedProxy.startsWith('https://')) {
+                remoteSubscriptionCount += 1;
+                if (remoteSubscriptionCount > MAX_XRAY_REMOTE_SUBSCRIPTIONS) {
+                    runtime.logger.warn(`Skipping remote subscription after ${MAX_XRAY_REMOTE_SUBSCRIPTIONS} URLs`);
+                    continue;
+                }
                 try {
-                    const response = await fetch(trimmedProxy, { method: 'GET', headers });
+                    const response = await fetchTextResource(trimmedProxy, { headers });
                     const fetchedUserinfo = response.headers.get('subscription-userinfo');
                     if (fetchedUserinfo && subscriptionUserinfo === undefined) {
                         subscriptionUserinfo = fetchedUserinfo;
                     }
-                    const text = await response.text();
+                    const text = response.text;
                     let processed = tryDecodeSubscriptionLines(text, { decodeUriComponent: true });
                     if (!Array.isArray(processed)) processed = [processed];
                     finalProxyList.push(...processed.filter(item => typeof item === 'string' && item.trim() !== ''));
@@ -312,6 +346,9 @@ export function createApp(bindings = {}) {
 
     app.get('/shorten-v2', async (c) => {
         try {
+            const rateLimited = await enforceRateLimit(c, runtime.kv, 'shorten', RATE_LIMITS.shortLinks);
+            if (rateLimited) return rateLimited;
+
             const url = c.req.query('url');
             if (!url) {
                 return c.text('Missing URL parameter', 400);
@@ -323,6 +360,9 @@ export function createApp(bindings = {}) {
                 return c.text('Invalid URL parameter', 400);
             }
             const queryString = parsedUrl.search;
+            if (!queryString || queryString.length <= 1) {
+                return c.text('URL parameter must include query parameters', 400);
+            }
 
             const shortLinks = requireShortLinkService(services.shortLinks);
             const code = await shortLinks.createShortLink(queryString, c.req.query('shortCode'));
@@ -353,7 +393,20 @@ export function createApp(bindings = {}) {
 
     app.post('/config', async (c) => {
         try {
-            const { type, content } = await c.req.json();
+            const rateLimited = await enforceRateLimit(c, runtime.kv, 'config', RATE_LIMITS.configWrites);
+            if (rateLimited) return rateLimited;
+
+            const contentLength = Number(getRequestHeader(c.req, 'Content-Length') || 0);
+            if (contentLength > MAX_CONFIG_BODY_BYTES) {
+                return c.text('Request body too large', 413);
+            }
+
+            const payload = await c.req.json();
+            if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+                return c.text('Invalid payload: expected a JSON object', 400);
+            }
+
+            const { type, content } = payload;
             const storage = requireConfigStorage(services.configStorage);
             const configId = await storage.saveConfig(type, content);
             return c.text(configId);
@@ -396,17 +449,21 @@ export function createApp(bindings = {}) {
         }
     });
 
-    app.get('/favicon.ico', async (c) => {
+    const assetHandler = async (c) => {
         if (!runtime.assetFetcher) {
             return c.notFound();
         }
         try {
-            return await runtime.assetFetcher(c.req.raw);
+            return withSecurityHeaders(await runtime.assetFetcher(c.req.raw));
         } catch (error) {
             runtime.logger.warn('Asset fetch failed', error);
             return c.notFound();
         }
-    });
+    };
+
+    app.get('/favicon.ico', assetHandler);
+    app.get('/styles.css', assetHandler);
+    app.get('/vendor/*', assetHandler);
 
     return app;
 }
@@ -532,6 +589,24 @@ function getRequestHeader(request, name) {
     return undefined;
 }
 
+function applySecurityHeaders(c) {
+    Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
+        c.header(key, value);
+    });
+}
+
+function withSecurityHeaders(response) {
+    const headers = new Headers(response.headers);
+    Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
+        headers.set(key, value);
+    });
+    return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers
+    });
+}
+
 function requireShortLinkService(service) {
     if (!service) {
         throw new MissingDependencyError('Short link functionality is unavailable');
@@ -551,5 +626,36 @@ function handleError(c, error, logger) {
         return c.text(error.message, error.status);
     }
     logger.error?.('Unhandled error', error);
-    return c.text(`Error: ${error.message}`, 500);
+    return c.text('Internal Server Error', 500);
+}
+
+async function enforceRateLimit(c, kv, namespace, { limit, windowSeconds }) {
+    if (!kv) return null;
+
+    const clientIp = getClientIp(c.req);
+    const now = Math.floor(Date.now() / 1000);
+    const windowId = Math.floor(now / windowSeconds);
+    const key = `_rate:${namespace}:${clientIp}:${windowId}`;
+
+    const current = Number(await kv.get(key) || '0');
+    if (current >= limit) {
+        return c.text('Too Many Requests', 429, {
+            'Retry-After': String(windowSeconds)
+        });
+    }
+
+    await kv.put(key, String(current + 1), { expirationTtl: windowSeconds * 2 });
+    return null;
+}
+
+function getClientIp(request) {
+    const cfIp = getRequestHeader(request, 'CF-Connecting-IP');
+    if (cfIp) return cfIp;
+
+    const forwardedFor = getRequestHeader(request, 'X-Forwarded-For');
+    if (forwardedFor) {
+        return String(forwardedFor).split(',')[0].trim() || 'unknown';
+    }
+
+    return 'unknown';
 }

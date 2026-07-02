@@ -245,9 +245,19 @@ export function deepCopy(obj) {
 
 export function generateWebPath(length = PATH_LENGTH) {
 	const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+	if (!globalThis.crypto?.getRandomValues) {
+		throw new Error('Secure random generator is unavailable')
+	}
 	let result = ''
-	for (let i = 0; i < length; i++) {
-		result += characters.charAt(Math.floor(Math.random() * characters.length))
+	const maxValue = Math.floor(256 / characters.length) * characters.length
+	const randomValues = new Uint8Array(length)
+	while (result.length < length) {
+		globalThis.crypto.getRandomValues(randomValues)
+		for (const value of randomValues) {
+			if (value >= maxValue) continue
+			result += characters.charAt(value % characters.length)
+			if (result.length === length) break
+		}
 	}
 	return result
 }

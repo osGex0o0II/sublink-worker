@@ -6,6 +6,8 @@
 import { MANDATORY_RULES, UNIFIED_RULES, PREDEFINED_RULE_SETS, SITE_RULE_SETS, IP_RULE_SETS, CLASH_SITE_RULE_SETS, CLASH_IP_RULE_SETS } from './rules.js';
 import { SITE_RULE_SET_BASE_URL, IP_RULE_SET_BASE_URL, CLASH_SITE_RULE_SET_BASE_URL, CLASH_IP_RULE_SET_BASE_URL } from './ruleUrls.js';
 
+const DEFAULT_RULE_SET_DOWNLOAD_DETOUR = 'DIRECT';
+
 function toStringArray(value) {
 	if (Array.isArray(value)) {
 		return value
@@ -16,6 +18,16 @@ function toStringArray(value) {
 		return value.split(',').map(x => x.trim()).filter(Boolean);
 	}
 	return [];
+}
+
+function createSingboxRemoteRuleSet(tag, url) {
+	return {
+		tag,
+		type: 'remote',
+		format: 'binary',
+		url,
+		download_detour: DEFAULT_RULE_SET_DOWNLOAD_DETOUR
+	};
 }
 
 export function normalizeSelectedRules(selectedRules = []) {
@@ -89,46 +101,32 @@ export function generateRuleSets(selectedRules = [], customRules = []) {
 		}
 	});
 
-	const site_rule_sets = Array.from(siteRuleSets).map(rule => ({
-		tag: rule,
-		type: 'remote',
-		format: 'binary',
-		url: `${SITE_RULE_SET_BASE_URL}${SITE_RULE_SETS[rule]}`,
-	}));
+	const site_rule_sets = Array.from(siteRuleSets)
+		.map(rule => createSingboxRemoteRuleSet(rule, `${SITE_RULE_SET_BASE_URL}${SITE_RULE_SETS[rule]}`));
 
-	const ip_rule_sets = Array.from(ipRuleSets).map(rule => ({
-		tag: `${rule}-ip`,
-		type: 'remote',
-		format: 'binary',
-		url: `${IP_RULE_SET_BASE_URL}${IP_RULE_SETS[rule]}`,
-	}));
+	const ip_rule_sets = Array.from(ipRuleSets)
+		.map(rule => createSingboxRemoteRuleSet(`${rule}-ip`, `${IP_RULE_SET_BASE_URL}${IP_RULE_SETS[rule]}`));
 
 	if (!selectedRules.includes('Non-China')) {
-		site_rule_sets.push({
-			tag: 'geolocation-!cn',
-			type: 'remote',
-			format: 'binary',
-			url: `${SITE_RULE_SET_BASE_URL}geolocation-!cn.srs`,
-		});
+		site_rule_sets.push(createSingboxRemoteRuleSet(
+			'geolocation-!cn',
+			`${SITE_RULE_SET_BASE_URL}geolocation-!cn.srs`
+		));
 	}
 
 	if (customRules) {
 		customRules.forEach(rule => {
 			toStringArray(rule.site).forEach(site => {
-				site_rule_sets.push({
-					tag: site,
-					type: 'remote',
-					format: 'binary',
-					url: `${SITE_RULE_SET_BASE_URL}${site}.srs`,
-				});
+				site_rule_sets.push(createSingboxRemoteRuleSet(
+					site,
+					`${SITE_RULE_SET_BASE_URL}${site}.srs`
+				));
 			});
 			toStringArray(rule.ip).forEach(ip => {
-				ip_rule_sets.push({
-					tag: `${ip}-ip`,
-					type: 'remote',
-					format: 'binary',
-					url: `${IP_RULE_SET_BASE_URL}${ip}.srs`,
-				});
+				ip_rule_sets.push(createSingboxRemoteRuleSet(
+					`${ip}-ip`,
+					`${IP_RULE_SET_BASE_URL}${ip}.srs`
+				));
 			});
 		});
 	}
