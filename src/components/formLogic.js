@@ -462,10 +462,11 @@ export const formLogicFn = (t) => {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
+                    const responseText = await response.text();
                     if (!response.ok) {
-                        throw new Error('Failed to shorten links');
+                        throw new Error(responseText || response.statusText || `HTTP ${response.status}`);
                     }
-                    const returnedCode = await response.text();
+                    const returnedCode = responseText;
 
                     const prefixMap = {
                         xray: 'x',
@@ -481,7 +482,7 @@ export const formLogicFn = (t) => {
                     this.shortenedLinks = shortened;
                 } catch (error) {
                     console.error('Error shortening links:', error);
-                    alert(window.APP_TRANSLATIONS.shortenFailed);
+                    alert(`${window.APP_TRANSLATIONS.shortenFailed}: ${error?.message || 'Unknown error'}`);
                 } finally {
                     this.shortening = false;
                 }
