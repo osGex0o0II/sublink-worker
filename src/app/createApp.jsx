@@ -344,30 +344,51 @@ export function createApp(bindings = {}) {
         return c.text(encodeBase64(finalString), 200, responseHeaders);
     });
 
+    const createShortLinkResponse = async (c, { url, shortCode } = {}) => {
+        const rateLimited = await enforceRateLimit(c, runtime.kv, 'shorten', RATE_LIMITS.shortLinks);
+        if (rateLimited) return rateLimited;
+
+        if (!url) {
+            return c.text('Missing URL parameter', 400);
+        }
+        let parsedUrl;
+        try {
+            parsedUrl = new URL(url);
+        } catch {
+            return c.text('Invalid URL parameter', 400);
+        }
+        const queryString = parsedUrl.search;
+        if (!queryString || queryString.length <= 1) {
+            return c.text('URL parameter must include query parameters', 400);
+        }
+
+        const shortLinks = requireShortLinkService(services.shortLinks);
+        const code = await shortLinks.createShortLink(queryString, shortCode);
+        return c.text(code);
+    };
+
     app.get('/shorten-v2', async (c) => {
         try {
-            const rateLimited = await enforceRateLimit(c, runtime.kv, 'shorten', RATE_LIMITS.shortLinks);
-            if (rateLimited) return rateLimited;
-
-            const url = c.req.query('url');
-            if (!url) {
-                return c.text('Missing URL parameter', 400);
-            }
-            let parsedUrl;
-            try {
-                parsedUrl = new URL(url);
-            } catch {
-                return c.text('Invalid URL parameter', 400);
-            }
-            const queryString = parsedUrl.search;
-            if (!queryString || queryString.length <= 1) {
-                return c.text('URL parameter must include query parameters', 400);
-            }
-
-            const shortLinks = requireShortLinkService(services.shortLinks);
-            const code = await shortLinks.createShortLink(queryString, c.req.query('shortCode'));
-            return c.text(code);
+            return await createShortLinkResponse(c, {
+                url: c.req.query('url'),
+                shortCode: c.req.query('shortCode')
+            });
         } catch (error) {
+            return handleError(c, error, runtime.logger);
+        }
+    });
+
+    app.post('/shorten-v2', async (c) => {
+        try {
+            const payload = await c.req.json();
+            if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+                return c.text('Invalid payload: expected a JSON object', 400);
+            }
+            return await createShortLinkResponse(c, payload);
+        } catch (error) {
+            if (error instanceof SyntaxError) {
+                return c.text(`Invalid format: ${error.message}`, 400);
+            }
             return handleError(c, error, runtime.logger);
         }
     });

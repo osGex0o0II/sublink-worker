@@ -151,6 +151,25 @@ proxy-groups:
         expect(kvMock.put).toHaveBeenCalled();
     });
 
+    it('POST /shorten-v2 returns short code', async () => {
+        const url = 'http://example.com/singbox?config=test';
+        const kvMock = {
+            put: vi.fn(async () => {}),
+            get: vi.fn(async () => null),
+            delete: vi.fn(async () => {})
+        };
+        const app = createTestApp({ kv: kvMock });
+        const res = await app.request('http://localhost/shorten-v2', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url })
+        });
+        expect(res.status).toBe(200);
+        const text = await res.text();
+        expect(text).toBeTruthy();
+        expect(kvMock.put).toHaveBeenCalled();
+    });
+
     it('GET /shorten-v2 rejects URLs without query parameters', async () => {
         const app = createTestApp();
         const res = await app.request(`http://localhost/shorten-v2?url=${encodeURIComponent('http://example.com')}`);
