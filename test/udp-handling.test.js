@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import { SingboxConfigBuilder } from '../src/builders/SingboxConfigBuilder.js';
 import { ClashConfigBuilder } from '../src/builders/ClashConfigBuilder.js';
 import { parseVless } from '../src/parsers/protocols/vlessParser.js';

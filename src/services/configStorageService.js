@@ -1,4 +1,4 @@
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import { generateWebPath } from '../utils.js';
 import { InvalidPayloadError, MissingDependencyError } from './errors.js';
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import { createTranslator } from '../src/i18n/index.js';
 import { ClashConfigBuilder } from '../src/builders/ClashConfigBuilder.js';
 import { sanitizeClashProxyGroups } from '../src/builders/helpers/clashConfigUtils.js';

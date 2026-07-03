@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 
 // Mock the httpSubscriptionFetcher module
 vi.mock('../src/parsers/subscription/httpSubscriptionFetcher.js', async (importOriginal) => {

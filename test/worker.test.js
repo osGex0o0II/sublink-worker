@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { createApp } from '../src/app/createApp.jsx';
 import { MemoryKVAdapter } from '../src/adapters/kv/memoryKv.js';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 
 const createTestApp = (overrides = {}) => {
     const runtime = {

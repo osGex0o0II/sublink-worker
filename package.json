@@ -6,7 +6,7 @@
   "scripts": {
     "build": "npm run build:css && npm run build:vendor",
     "build:css": "tailwindcss -i src/styles/tailwind.css -o public/styles.css --minify",
-    "build:vendor": "mkdir -p public/vendor/fontawesome/css public/vendor/fontawesome/webfonts public/vendor/alpinejs public/vendor/js-yaml && cp node_modules/@fortawesome/fontawesome-free/css/all.min.css public/vendor/fontawesome/css/all.min.css && cp node_modules/@fortawesome/fontawesome-free/webfonts/* public/vendor/fontawesome/webfonts/ && cp node_modules/alpinejs/dist/cdn.min.js public/vendor/alpinejs/cdn.min.js && cp node_modules/js-yaml/dist/js-yaml.min.js public/vendor/js-yaml/js-yaml.min.js",
+    "build:vendor": "mkdir -p public/vendor/fontawesome/css public/vendor/fontawesome/webfonts public/vendor/alpinejs public/vendor/js-yaml && cp node_modules/@fortawesome/fontawesome-free/css/all.min.css public/vendor/fontawesome/css/all.min.css && cp node_modules/@fortawesome/fontawesome-free/webfonts/* public/vendor/fontawesome/webfonts/ && cp node_modules/alpinejs/dist/cdn.min.js public/vendor/alpinejs/cdn.min.js && cp node_modules/js-yaml/dist/browser/js-yaml.umd.min.js public/vendor/js-yaml/js-yaml.min.js",
     "deploy": "npm run build && npm run setup-kv && wrangler deploy",
     "dev": "wrangler dev",
     "start": "wrangler dev",
@@ -14,17 +14,17 @@
     "setup-kv": "node scripts/setup-kv.cjs"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.17.0",
+    "@cloudflare/vitest-pool-workers": "^0.18.0",
     "@fortawesome/fontawesome-free": "^7.3.0",
     "@tailwindcss/cli": "^4.3.2",
     "alpinejs": "^3.15.12",
     "tailwindcss": "^4.3.2",
     "vitest": "^4.1.9",
-    "wrangler": "^4.106.0"
+    "wrangler": "^4.107.0"
   },
   "dependencies": {
     "hono": "^4.12.27",
-    "js-yaml": "^4.2.0"
+    "js-yaml": "^5.2.1"
   },
   "engines": {
     "node": ">=22"
