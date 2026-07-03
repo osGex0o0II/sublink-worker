@@ -457,7 +457,7 @@ export const formLogicFn = (t) => {
                     const payload = { urlBase64: this.encodeBase64Utf8(firstUrl) };
                     if (customCode) payload.shortCode = customCode;
 
-                    const response = await fetch(`${origin}/shorten-v2`, {
+                    const response = await fetch(`${origin}/config/shorten`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)

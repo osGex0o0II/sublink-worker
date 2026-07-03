@@ -367,6 +367,15 @@ export function createApp(bindings = {}) {
         return c.text(code);
     };
 
+    const createShortLinkJsonResponse = async (c) => {
+        const payload = await c.req.json();
+        if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+            return c.text('Invalid payload: expected a JSON object', 400);
+        }
+        const url = payload.url || decodeBase64Url(payload.urlBase64);
+        return await createShortLinkResponse(c, { url, shortCode: payload.shortCode });
+    };
+
     app.get('/shorten-v2', async (c) => {
         try {
             return await createShortLinkResponse(c, {
@@ -380,12 +389,18 @@ export function createApp(bindings = {}) {
 
     app.post('/shorten-v2', async (c) => {
         try {
-            const payload = await c.req.json();
-            if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
-                return c.text('Invalid payload: expected a JSON object', 400);
+            return await createShortLinkJsonResponse(c);
+        } catch (error) {
+            if (error instanceof SyntaxError) {
+                return c.text(`Invalid format: ${error.message}`, 400);
             }
-            const url = payload.url || decodeBase64Url(payload.urlBase64);
-            return await createShortLinkResponse(c, { url, shortCode: payload.shortCode });
+            return handleError(c, error, runtime.logger);
+        }
+    });
+
+    app.post('/config/shorten', async (c) => {
+        try {
+            return await createShortLinkJsonResponse(c);
         } catch (error) {
             if (error instanceof SyntaxError) {
                 return c.text(`Invalid format: ${error.message}`, 400);

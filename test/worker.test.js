@@ -186,6 +186,22 @@ proxy-groups:
         expect((await resolved.json()).originalUrl).toBe('http://localhost/singbox?config=ss%3A%2F%2Ftest');
     });
 
+    it('POST /config/shorten accepts base64 encoded URL payloads', async () => {
+        const url = 'http://example.com/singbox?config=ss%3A%2F%2Ftest';
+        const app = createTestApp();
+        const res = await app.request('http://localhost/config/shorten', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ urlBase64: btoa(url) })
+        });
+
+        expect(res.status).toBe(200);
+        const code = await res.text();
+        const resolved = await app.request(`http://localhost/resolve?url=${encodeURIComponent(`http://localhost/b/${code}`)}`);
+        expect(resolved.status).toBe(200);
+        expect((await resolved.json()).originalUrl).toBe('http://localhost/singbox?config=ss%3A%2F%2Ftest');
+    });
+
     it('GET /shorten-v2 rejects URLs without query parameters', async () => {
         const app = createTestApp();
         const res = await app.request(`http://localhost/shorten-v2?url=${encodeURIComponent('http://example.com')}`);
