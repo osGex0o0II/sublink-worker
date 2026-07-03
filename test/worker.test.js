@@ -30,7 +30,15 @@ describe('Worker', () => {
         expect(text).toContain('/vendor/js-yaml/js-yaml.min.js');
         expect(text).toContain('/vendor/alpinejs/cdn.min.js');
         expect(text).not.toContain('cdn.tailwindcss.com');
-        expect(res.headers.get('content-security-policy')).toContain("default-src 'self'");
+        expect(text).not.toContain('updateChecker(');
+        expect(text).not.toContain('api.github.com');
+        expect(text).toContain('font-mono text-xs text-gray-500 dark:text-gray-400 break-all');
+        expect(text).not.toContain('font-mono text-xs text-gray-500 dark:text-gray-400 truncate');
+        const csp = res.headers.get('content-security-policy');
+        expect(csp).toContain("default-src 'self'");
+        expect(csp).toContain("'unsafe-eval'");
+        expect(csp).toContain("connect-src 'self'");
+        expect(csp).not.toContain('api.github.com');
         expect(res.headers.get('strict-transport-security')).toContain('max-age=31536000');
     });
 

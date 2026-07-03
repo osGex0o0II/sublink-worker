@@ -417,7 +417,7 @@ class="px-6 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 bord
             <div class="min-w-0 flex-1">
               <div class="text-sm font-bold text-gray-900 dark:text-white">{t(field.labelKey)}</div>
               <p
-                class="mt-0.5 font-mono text-xs text-gray-500 dark:text-gray-400 truncate"
+                class="mt-0.5 font-mono text-xs text-gray-500 dark:text-gray-400 break-all"
                 x-text={`shortenedLinks ? shortenedLinks?.${field.key} : generatedLinks?.${field.key}`}
               ></p>
             </div>
