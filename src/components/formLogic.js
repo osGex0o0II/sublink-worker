@@ -454,7 +454,7 @@ export const formLogicFn = (t) => {
 
                     const firstUrl = Object.values(this.generatedLinks)[0];
                     const customCode = this.customShortCode.trim();
-                    const payload = { url: firstUrl };
+                    const payload = { urlBase64: this.encodeBase64Utf8(firstUrl) };
                     if (customCode) payload.shortCode = customCode;
 
                     const response = await fetch(`${origin}/shorten-v2`, {
@@ -485,6 +485,13 @@ export const formLogicFn = (t) => {
                 } finally {
                     this.shortening = false;
                 }
+            },
+
+            encodeBase64Utf8(value) {
+                const bytes = new TextEncoder().encode(value);
+                let binary = '';
+                for (const byte of bytes) binary += String.fromCharCode(byte);
+                return btoa(binary);
             },
 
             // Handle input change with debounce

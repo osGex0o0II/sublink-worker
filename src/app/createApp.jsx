@@ -384,7 +384,8 @@ export function createApp(bindings = {}) {
             if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
                 return c.text('Invalid payload: expected a JSON object', 400);
             }
-            return await createShortLinkResponse(c, payload);
+            const url = payload.url || decodeBase64Url(payload.urlBase64);
+            return await createShortLinkResponse(c, { url, shortCode: payload.shortCode });
         } catch (error) {
             if (error instanceof SyntaxError) {
                 return c.text(`Invalid format: ${error.message}`, 400);
@@ -521,6 +522,17 @@ function parseJsonArray(raw) {
 
 function parseBooleanFlag(value) {
     return value === 'true' || value === true;
+}
+
+function decodeBase64Url(value) {
+    if (!value) return undefined;
+    try {
+        const binary = atob(String(value));
+        const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+        return new TextDecoder().decode(bytes);
+    } catch {
+        return undefined;
+    }
 }
 
 function parseSemverLike(value) {
