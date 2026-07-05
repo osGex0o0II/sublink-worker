@@ -29,6 +29,7 @@ API Token 至少需要允许 Workers 部署和 KV namespace 管理。缺少 toke
 
 Web 用户和订阅客户端通常会访问以下路径，其中订阅客户端常以 CLI、移动客户端或代理客户端 User-Agent 请求：
 
+- `/health`
 - `/`
 - `/singbox`
 - `/clash`
@@ -53,6 +54,7 @@ Web 用户和订阅客户端通常会访问以下路径，其中订阅客户端�
 
 部署后至少验证：
 
+- `/health` 返回 `status: ok`，并显示 KV 和 Assets 为 `available`。
 - 首页能加载，并且控制台无脚本错误。
 - 输入一个 `ss://` 测试节点后能生成 SingBox、Clash、Xray、Surge 四类链接。
 - 不填写自定义短码时能生成 `/b/`、`/c/`、`/x/`、`/s/` 四类短链接。

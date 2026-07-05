@@ -11,7 +11,7 @@ import { ClashConfigBuilder } from '../builders/ClashConfigBuilder.js';
 import { SurgeConfigBuilder } from '../builders/SurgeConfigBuilder.js';
 import { createTranslator, resolveLanguage } from '../i18n/index.js';
 import { encodeBase64, tryDecodeSubscriptionLines } from '../utils.js';
-import { APP_NAME, APP_SUBTITLE } from '../constants.js';
+import { APP_NAME, APP_SUBTITLE, APP_VERSION } from '../constants.js';
 import { ShortLinkService } from '../services/shortLinkService.js';
 import { ConfigStorageService } from '../services/configStorageService.js';
 import { ServiceError, MissingDependencyError } from '../services/errors.js';
@@ -63,6 +63,20 @@ export function createApp(bindings = {}) {
         c.set('lang', lang);
         c.set('t', createTranslator(lang));
         await next();
+    });
+
+    app.get('/health', (c) => {
+        c.header('Cache-Control', 'no-store');
+        return c.json({
+            status: 'ok',
+            name: APP_NAME,
+            version: APP_VERSION,
+            services: {
+                kv: runtime.kv ? 'available' : 'missing',
+                assets: runtime.assetFetcher ? 'available' : 'missing'
+            },
+            timestamp: new Date().toISOString()
+        });
     });
 
     app.get('/', (c) => {

@@ -63,6 +63,19 @@ describe('smoke e2e', () => {
         const checks = [];
         const record = (message) => checks.push(message);
 
+        const health = await requestText(app, '/health');
+        expect(health.response.status).toBe(200);
+        expect(health.response.headers.get('cache-control')).toBe('no-store');
+        const healthJson = JSON.parse(health.text);
+        expect(healthJson).toMatchObject({
+            status: 'ok',
+            services: {
+                kv: 'available',
+                assets: 'available'
+            }
+        });
+        record('health');
+
         const home = await requestText(app, '/');
         expect(home.response.status).toBe(200);
         const csp = home.response.headers.get('content-security-policy') || '';
@@ -161,6 +174,6 @@ describe('smoke e2e', () => {
         expect(clashWithConfig.text.includes('mixed-port: 7890') || clashWithConfig.text.includes('mixed_port: 7890')).toBe(true);
         record('configId conversion');
 
-        expect(checks).toHaveLength(14);
+        expect(checks).toHaveLength(15);
     });
 });

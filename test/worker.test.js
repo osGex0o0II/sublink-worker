@@ -18,6 +18,27 @@ const createTestApp = (overrides = {}) => {
 };
 
 describe('Worker', () => {
+    it('GET /health returns service status without caching', async () => {
+        const app = createTestApp({
+            assetFetcher: async () => new Response('asset')
+        });
+        const res = await app.request('http://localhost/health');
+        expect(res.status).toBe(200);
+        expect(res.headers.get('content-type')).toContain('application/json');
+        expect(res.headers.get('cache-control')).toBe('no-store');
+        const json = await res.json();
+        expect(json).toMatchObject({
+            status: 'ok',
+            name: 'Sublink Worker',
+            version: '2.4.2',
+            services: {
+                kv: 'available',
+                assets: 'available'
+            }
+        });
+        expect(Date.parse(json.timestamp)).not.toBeNaN();
+    });
+
     it('GET / returns HTML', async () => {
         const app = createTestApp();
         const res = await app.request('http://localhost/');
