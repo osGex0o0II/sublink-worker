@@ -332,6 +332,9 @@ describe('GET /subconverter', () => {
             const text = await res.text();
             expect(text).toContain('Invalid selectedRules');
             expect(text).toContain('balancde');
+            expect(text).toContain('domestic');
+            expect(text).toContain('media');
+            expect(text).toContain('full');
         });
 
         it('returns 400 for non-JSON non-preset string', async () => {

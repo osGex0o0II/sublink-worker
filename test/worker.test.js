@@ -50,6 +50,12 @@ describe('Worker', () => {
         expect(text).toContain('/vendor/fontawesome/css/all.min.css');
         expect(text).toContain('/vendor/js-yaml/js-yaml.min.js');
         expect(text).toContain('/vendor/alpinejs/cdn.min.js');
+        expect(text).toContain('最小化');
+        expect(text).toContain('日常推荐');
+        expect(text).toContain('影音社媒');
+        expect(text).toContain('全面');
+        expect(text).toContain('非中国');
+        expect(text).toContain('data-results-section');
         expect(text).not.toContain('cdn.tailwindcss.com');
         expect(text).not.toContain('updateChecker(');
         expect(text).not.toContain('api.github.com');

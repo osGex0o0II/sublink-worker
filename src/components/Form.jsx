@@ -1,6 +1,6 @@
 /** @jsxRuntime automatic */
 /** @jsxImportSource hono/jsx */
-import { DIRECT_DEFAULT_RULES, HIDDEN_RULES, MANDATORY_RULES, PREDEFINED_RULE_SETS, UNIFIED_RULES } from '../config/index.js';
+import { DIRECT_DEFAULT_RULES, HIDDEN_RULES, MANDATORY_RULES, PREDEFINED_RULE_SETS, REJECT_ACTION_RULES, UNIFIED_RULES } from '../config/index.js';
 import { CustomRules } from './CustomRules.jsx';
 import { TextareaWithActions } from './TextareaWithActions.jsx';
 import { ValidatedTextarea } from './ValidatedTextarea.jsx';
@@ -12,6 +12,21 @@ const LINK_FIELDS = [
   { key: 'xray', labelKey: 'xrayLink', short: 'XR' },
   { key: 'surge', labelKey: 'surgeLink', short: 'SG' }
 ];
+
+const RULE_PRESET_KEYS = ['minimal', 'domestic', 'balanced', 'media', 'comprehensive'];
+const VISIBLE_RULES = UNIFIED_RULES.filter(rule => !HIDDEN_RULES.includes(rule.name));
+const SUMMARY_RULES = UNIFIED_RULES.filter(rule => !MANDATORY_RULES.includes(rule.name));
+
+const getRuleTargetLabelKey = (ruleName) => {
+  if (REJECT_ACTION_RULES.has(ruleName)) return 'rejectRoute';
+  if (DIRECT_DEFAULT_RULES.has(ruleName)) return 'directRoute';
+  return 'proxyRoute';
+};
+
+const getPresetRuleCount = (presetKey) => {
+  const rules = PREDEFINED_RULE_SETS[presetKey] || [];
+  return new Set([...MANDATORY_RULES, ...rules]).size;
+};
 
 const AdvancedSection = ({ id, title, icon, children }) => (
   <section class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -163,13 +178,37 @@ export const Form = (props) => {
 
     {/* Rule Selection */ }
     <AdvancedSection id="rules" title={t('ruleSelection')} icon="fas fa-filter">
-      <div class="flex items-center justify-between gap-3 mb-4">
-        <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{t('rulePreset')}</span>
-        <select x-model="selectedPredefinedRule" x-on:change="applyPredefinedRule()" class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-        <option value="domestic">{t('domestic')}</option>
-        <option value="custom">{t('custom')}</option>
-      </select>
-          </div>
+      <div class="mb-4">
+        <div class="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">{t('rulePreset')}</div>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+          {RULE_PRESET_KEYS.map((presetKey) => (
+            <button
+              type="button"
+              x-on:click={`selectRulePreset('${presetKey}')`}
+              x-bind:aria-pressed={`(selectedPredefinedRule === '${presetKey}').toString()`}
+              class="min-h-14 rounded-lg border px-3 py-2 text-left transition-colors"
+              x-bind:class={`selectedPredefinedRule === '${presetKey}'
+                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 hover:border-primary-300 dark:hover:border-primary-700'`}
+            >
+              <span class="block text-sm font-semibold">{t(presetKey)}</span>
+              <span class="mt-1 block text-xs opacity-70">{getPresetRuleCount(presetKey)} {t('rulesUnit')}</span>
+            </button>
+          ))}
+          <button
+            type="button"
+            x-on:click="selectCustomRules()"
+            x-bind:aria-pressed="(selectedPredefinedRule === 'custom').toString()"
+            class="min-h-14 rounded-lg border px-3 py-2 text-left transition-colors"
+            x-bind:class="selectedPredefinedRule === 'custom'
+              ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+              : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 hover:border-primary-300 dark:hover:border-primary-700'"
+          >
+            <span class="block text-sm font-semibold">{t('custom')}</span>
+            <span class="mt-1 block text-xs opacity-70">{t('customPresetHint')}</span>
+          </button>
+        </div>
+      </div>
 
   <div class="mb-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-3">
     <div class="mb-2 text-xs font-semibold text-gray-500 dark:text-gray-400">{t('mandatoryRules')}</div>
@@ -185,18 +224,41 @@ export const Form = (props) => {
     </div>
   </div>
 
+  <div class="mb-4">
+    <div class="mb-2 text-xs font-semibold text-gray-500 dark:text-gray-400">{t('selectedRulesLabel')}</div>
+    <div class="flex flex-wrap gap-2">
+      {SUMMARY_RULES.map((rule) => (
+        <span
+          x-show={`isOptionalRuleSelected('${rule.name}')`}
+          class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-300"
+        >
+          <span>{t(`outboundNames.${rule.name}`)}</span>
+          <span class="text-[11px] font-medium text-gray-400 dark:text-gray-500">
+            {t(getRuleTargetLabelKey(rule.name))}
+          </span>
+        </span>
+      ))}
+      <span x-show="getSelectedOptionalRules().length === 0" class="text-xs text-gray-400 dark:text-gray-500">
+        {t('noOptionalRules')}
+      </span>
+    </div>
+  </div>
+
   <div x-show="selectedPredefinedRule === 'custom'" class="flex flex-wrap gap-2">
-    {UNIFIED_RULES.filter(rule => !HIDDEN_RULES.includes(rule.name)).map((rule) => (
+    {VISIBLE_RULES.map((rule) => (
       <label class="flex items-center px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 hover:bg-primary-50 dark:hover:bg-primary-900/20 cursor-pointer transition-colors group">
         <input
           type="checkbox"
           value={rule.name}
-          x-model="selectedRules" 
-                    x-on:change="selectedPredefinedRule = 'custom'"
-        class="w-3.5 h-3.5 text-primary-600 rounded border-gray-300 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600"
-                  />
+          x-model="selectedRules"
+          x-on:change="selectedPredefinedRule = 'custom'"
+          class="w-3.5 h-3.5 text-primary-600 rounded border-gray-300 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600"
+        />
         <span class="ml-2 text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 group-hover:text-primary-700 dark:group-hover:text-primary-300 transition-colors">
           {t(`outboundNames.${rule.name}`)}
+        </span>
+        <span class="ml-1 text-[11px] font-medium text-gray-400 dark:text-gray-500">
+          {t(getRuleTargetLabelKey(rule.name))}
         </span>
       </label>
     ))}
@@ -397,7 +459,7 @@ class="px-6 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 bord
       </form>
 
   {/* Results Section */ }
-  <div x-cloak x-show="generatedLinks" x-data="{ copied: null }" {...{'x-transition:enter': 'transition ease-out duration-500', 'x-transition:enter-start': 'opacity-0 transform translate-y-8', 'x-transition:enter-end': 'opacity-100 transform translate-y-0'}} class="mt-8">
+  <div data-results-section x-cloak x-show="generatedLinks" x-data="{ copied: null }" {...{'x-transition:enter': 'transition ease-out duration-500', 'x-transition:enter-start': 'opacity-0 transform translate-y-8', 'x-transition:enter-end': 'opacity-100 transform translate-y-0'}} class="mt-8">
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5 mb-8">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">

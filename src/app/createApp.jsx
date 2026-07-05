@@ -22,6 +22,7 @@ import { fetchTextResource } from '../parsers/subscription/safeFetch.js';
 const DEFAULT_USER_AGENT = 'curl/7.74.0';
 const MAX_XRAY_REMOTE_SUBSCRIPTIONS = 8;
 const MAX_CONFIG_BODY_BYTES = 1024 * 1024;
+const VALID_RULE_PRESETS = Object.keys(PREDEFINED_RULE_SETS).join(', ');
 const RATE_LIMITS = {
     shortLinks: { limit: 60, windowSeconds: 60 },
     configWrites: { limit: 20, windowSeconds: 60 }
@@ -274,10 +275,10 @@ export function createApp(bindings = {}) {
                     if (Array.isArray(parsed)) {
                         selectedRules = parsed;
                     } else {
-                        return c.text('Invalid selectedRules: must be a preset name (minimal, balanced, comprehensive) or a JSON array', 400);
+                        return c.text(`Invalid selectedRules: must be a preset name (${VALID_RULE_PRESETS}) or a JSON array`, 400);
                     }
                 } catch {
-                    return c.text(`Invalid selectedRules: "${rawSelectedRules}" is not a valid preset name or JSON array. Valid presets: minimal, balanced, comprehensive`, 400);
+                    return c.text(`Invalid selectedRules: "${rawSelectedRules}" is not a valid preset name or JSON array. Valid presets: ${VALID_RULE_PRESETS}`, 400);
                 }
             }
 

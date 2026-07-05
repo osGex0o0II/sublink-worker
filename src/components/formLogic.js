@@ -82,7 +82,7 @@ export const formLogicFn = (t) => {
                 ua: false          // User Agent
             },
             selectedRules: [],
-            selectedPredefinedRule: 'domestic',
+            selectedPredefinedRule: 'balanced',
             subconverterCopied: false,
             groupByCountry: false,
             includeAutoSelect: true,
@@ -198,6 +198,15 @@ export const formLogicFn = (t) => {
                 }
             },
 
+            selectRulePreset(preset) {
+                this.selectedPredefinedRule = preset;
+                this.applyPredefinedRule();
+            },
+
+            selectCustomRules() {
+                this.selectedPredefinedRule = 'custom';
+            },
+
             withoutBaseRules(rules = []) {
                 const hiddenRules = Array.isArray(window.HIDDEN_RULES) ? window.HIDDEN_RULES : (Array.isArray(window.MANDATORY_RULES) ? window.MANDATORY_RULES : (Array.isArray(window.BASE_RULES) ? window.BASE_RULES : []));
                 return (Array.isArray(rules) ? rules : []).filter(rule => !hiddenRules.includes(rule));
@@ -213,16 +222,36 @@ export const formLogicFn = (t) => {
                 }
             },
 
+            getSelectedOptionalRules() {
+                const rules = window.PREDEFINED_RULE_SETS || {};
+                if (this.selectedPredefinedRule && this.selectedPredefinedRule !== 'custom' && rules[this.selectedPredefinedRule]) {
+                    return this.withoutBaseRules(rules[this.selectedPredefinedRule]);
+                }
+                return this.withoutBaseRules(this.selectedRules);
+            },
+
+            isOptionalRuleSelected(ruleName) {
+                return this.getSelectedOptionalRules().includes(ruleName);
+            },
+
+            getRuleSelectionParam() {
+                const rules = window.PREDEFINED_RULE_SETS || {};
+                if (this.selectedPredefinedRule && this.selectedPredefinedRule !== 'custom' && rules[this.selectedPredefinedRule]) {
+                    return this.selectedPredefinedRule;
+                }
+                return JSON.stringify(this.selectedRules);
+            },
+
+            appendRuleSelectionParam(params) {
+                const value = this.getRuleSelectionParam();
+                if (value) params.append('selectedRules', value);
+            },
+
             getSubconverterUrl() {
                 const origin = window.location.origin;
                 const params = new URLSearchParams();
 
-                // Use preset name directly if a predefined rule set is selected
-                if (this.selectedPredefinedRule && this.selectedPredefinedRule !== 'custom') {
-                    params.append('selectedRules', this.selectedPredefinedRule);
-                } else if (this.selectedPredefinedRule === 'custom') {
-                    params.append('selectedRules', JSON.stringify(this.selectedRules));
-                }
+                this.appendRuleSelectionParam(params);
 
                 // Include customRules when available (best-effort; may make URL long)
                 try {
@@ -395,7 +424,7 @@ export const formLogicFn = (t) => {
                     const params = new URLSearchParams();
                     params.append('config', this.input);
                     params.append('ua', this.customUA);
-                    params.append('selectedRules', JSON.stringify(this.selectedRules));
+                    this.appendRuleSelectionParam(params);
                     params.append('customRules', JSON.stringify(customRules));
 
                     if (this.groupByCountry) params.append('group_by_country', 'true');
@@ -422,7 +451,8 @@ export const formLogicFn = (t) => {
 
                     // Scroll to results
                     setTimeout(() => {
-                        const resultsDiv = document.querySelector('.mt-12');
+                        if (typeof document === 'undefined') return;
+                        const resultsDiv = document.querySelector('[data-results-section]');
                         if (resultsDiv) {
                             resultsDiv.scrollIntoView({ behavior: 'smooth' });
                         }
