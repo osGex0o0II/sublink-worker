@@ -40,7 +40,7 @@ Web 用户和订阅客户端通常会访问以下路径，其中订阅客户端�
 - `/x/*`
 - `/s/*`
 
-如果 Cloudflare 对这些访问返回 `cf-mitigated: challenge`，请求会在到达 Worker 前被拦截。Web UI 可能需要交互挑战，订阅客户端则会直接无法完成转换或更新。
+如果 Cloudflare 对这些访问返回 `cf-mitigated: challenge`，请求会在到达 Worker 前被拦截。Web UI 可能需要交互挑战，订阅客户端和健康检查则会直接无法完成转换、更新或监控。
 
 建议在 Cloudflare WAF 中为上述路径创建 Skip/Allow 规则，跳过会产生交互挑战的安全产品。普通 Bot Fight Mode 不能通过 WAF Skip 规则绕过；如果它拦截订阅客户端，需要在 Cloudflare 控制台调整对应 Bot 设置。
 
