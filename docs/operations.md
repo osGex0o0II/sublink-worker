@@ -27,8 +27,9 @@ API Token 至少需要允许 Workers 部署和 KV namespace 管理。缺少 toke
 
 ## Cloudflare 安全规则
 
-订阅客户端通常以 CLI、移动客户端或代理客户端 User-Agent 访问以下路径：
+Web 用户和订阅客户端通常会访问以下路径，其中订阅客户端常以 CLI、移动客户端或代理客户端 User-Agent 请求：
 
+- `/`
 - `/singbox`
 - `/clash`
 - `/xray`
@@ -38,7 +39,7 @@ API Token 至少需要允许 Workers 部署和 KV namespace 管理。缺少 toke
 - `/x/*`
 - `/s/*`
 
-如果 Cloudflare 对这些机器访问返回 `cf-mitigated: challenge`，请求会在到达 Worker 前被拦截，订阅客户端无法完成转换或更新。
+如果 Cloudflare 对这些访问返回 `cf-mitigated: challenge`，请求会在到达 Worker 前被拦截。Web UI 可能需要交互挑战，订阅客户端则会直接无法完成转换或更新。
 
 建议在 Cloudflare WAF 中为上述路径创建 Skip/Allow 规则，跳过会产生交互挑战的安全产品。普通 Bot Fight Mode 不能通过 WAF Skip 规则绕过；如果它拦截订阅客户端，需要在 Cloudflare 控制台调整对应 Bot 设置。
 
@@ -56,7 +57,7 @@ API Token 至少需要允许 Workers 部署和 KV namespace 管理。缺少 toke
 - 输入一个 `ss://` 测试节点后能生成 SingBox、Clash、Xray、Surge 四类链接。
 - 不填写自定义短码时能生成 `/b/`、`/c/`、`/x/`、`/s/` 四类短链接。
 - 重复自定义短码时页面显示明确错误，例如 `Short code already exists`。
-- 使用 `curl -I` 或订阅客户端验证转换接口没有被 Cloudflare challenge 拦截。
+- 使用 `curl -I` 或订阅客户端验证首页和转换接口没有被 Cloudflare challenge 拦截。
 
 ## 回滚
 
