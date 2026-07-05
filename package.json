@@ -10,8 +10,9 @@
     "deploy": "npm run build && npm run setup-kv && wrangler deploy",
     "dev": "wrangler dev",
     "start": "wrangler dev",
+    "smoke": "vitest run test/smoke-e2e.test.js",
     "test": "vitest run",
-    "verify": "npm run build && npm test && npm audit && npm outdated",
+    "verify": "npm run build && npm test && npm run smoke && npm audit && npm outdated",
     "setup-kv": "node scripts/setup-kv.cjs"
   },
   "devDependencies": {

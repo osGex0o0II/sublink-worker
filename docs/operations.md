@@ -9,7 +9,7 @@ npm ci
 npm run verify
 ```
 
-`npm run verify` 会依次执行构建、完整测试、安全审计和依赖 freshness 检查。任何一步失败都不要部署。
+`npm run verify` 会依次执行构建、完整测试、端到端冒烟验证、安全审计和依赖 freshness 检查。任何一步失败都不要部署。
 
 ## GitHub Secrets
 
