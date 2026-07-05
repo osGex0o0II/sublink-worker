@@ -34,6 +34,12 @@ npm run dev
 npm test
 ```
 
+上线前推荐直接执行完整门禁：
+
+```bash
+npm run verify
+```
+
 ## 功能特性
 
 ### 支持的协议
@@ -88,6 +94,7 @@ binding = "ASSETS"
 - 改运行时或 KV 时，验证 Cloudflare Workers 入口、KV 绑定和本地 Wrangler 开发环境。
 - 改 Web 界面文案时，同步维护 `src/i18n/` 下的多语言内容。
 - 小改动优先跑相关单测；涉及入口、运行时、KV 或共享逻辑后跑 `npm test`。
+- 部署、WAF 放行和线上验证流程见 [Operations Guide](docs/operations.md)。
 
 ## 维护约束
 

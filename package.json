@@ -11,6 +11,7 @@
     "dev": "wrangler dev",
     "start": "wrangler dev",
     "test": "vitest run",
+    "verify": "npm run build && npm test && npm audit && npm outdated",
     "setup-kv": "node scripts/setup-kv.cjs"
   },
   "devDependencies": {
