@@ -334,8 +334,17 @@ describe('Adversarial Sing-Box subscription conversion', () => {
                 if (rs.type === 'remote') {
                     expect(rs.url).toMatch(/^https?:\/\//);
                     expect(rs.format).toBe('binary');
-                    expect(rs.download_detour).toBe('DIRECT');
                 }
+            }
+            // 1.14 tier uses shared http_client instead of per-rule-set download_detour
+            if (result.route.default_http_client) {
+                expect(result.http_clients).toBeDefined();
+            } else {
+                result.route.rule_set.forEach(rs => {
+                    if (rs.type === 'remote') {
+                        expect(rs.download_detour).toBe('DIRECT');
+                    }
+                });
             }
         });
     });

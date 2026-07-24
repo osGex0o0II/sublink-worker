@@ -1,7 +1,7 @@
 import * as yaml from 'js-yaml';
 import { CLASH_CONFIG, generateRules, generateClashRuleSets, getOutbounds, PREDEFINED_RULE_SETS, AI_AUTO_TEST_URL, DIRECT_DEFAULT_RULES, TRANSPARENT_RULES } from '../config/index.js';
 import { BaseConfigBuilder } from './BaseConfigBuilder.js';
-import { deepCopy, generateWebPath, groupProxiesByCountry } from '../utils.js';
+import { deepCopy, generateWebPath, groupProxiesByCountry, buildCountryNameFilter } from '../utils.js';
 import { addProxyWithDedup } from './helpers/proxyHelpers.js';
 import { buildSelectorMembers, buildNodeSelectMembers, buildCustomRuleMembers, uniqueNames } from './helpers/groupBuilder.js';
 import { emitClashRules, sanitizeClashProxyGroups } from './helpers/clashConfigUtils.js';
@@ -440,11 +440,11 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
                 const name = this.t(`outboundNames.${rule.name}`);
                 if (!this.hasProxyGroup(name)) {
                     const proxies = buildCustomRuleMembers({
-                        proxyList,
-                        translator: this.t,
-                        manualGroupName: this.manualGroupName,
-                        includeAutoSelect: this.shouldIncludeAutoSelectGroup(proxyList)
-                    });
+                    proxyList,
+                    translator: this.t,
+                    manualGroupName: this.manualGroupName,
+                    includeAutoSelect: this.shouldIncludeAutoSelectGroup(proxyList)
+                });
                     const group = {
                         type: "select",
                         name,
@@ -471,13 +471,28 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
             getName: proxy => this.getProxyName(proxy)
         });
 
+        // Provider mode leaves no inline proxies, but mihomo can filter provider
+        // members per group (`use` + `filter`), so enumerate countries from the
+        // names collected at fetch time and reference the providers instead.
+        const providerNames = this.getAllProviderNames();
+        if (providerNames.length > 0 && this.providerNodeNames.length > 0) {
+            const providerCountryGroups = groupProxiesByCountry(this.providerNodeNames, {
+                getName: name => name
+            });
+            Object.keys(providerCountryGroups).forEach(country => {
+                if (!countryGroups[country]) {
+                    countryGroups[country] = { ...providerCountryGroups[country], proxies: [] };
+                }
+            });
+        }
+
         const existingNames = new Set((this.config['proxy-groups'] || []).map(g => normalizeGroupName(g?.name)).filter(Boolean));
 
         const countries = Object.keys(countryGroups).sort((a, b) => a.localeCompare(b));
         const countryGroupNames = [];
 
         countries.forEach(country => {
-            const { emoji, name, proxies } = countryGroups[country];
+            const { emoji, name, aliases, proxies } = countryGroups[country];
             const groupName = `${emoji} ${name}`;
             const norm = normalizeGroupName(groupName);
             if (!existingNames.has(norm)) {
@@ -489,10 +504,14 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
                     interval: 300,
                     lazy: false
                 });
-                // Add 'use' field if we have proxy-providers
-                const providerNames = this.getAllProviderNames();
+                // Add 'use' field if we have proxy-providers, narrowed to this
+                // country so provider members don't leak into every group
                 if (providerNames.length > 0) {
                     group.use = providerNames;
+                    const filter = buildCountryNameFilter({ emoji, aliases });
+                    if (filter) {
+                        group.filter = filter;
+                    }
                 }
                 this.config['proxy-groups'].push(group);
                 existingNames.add(norm);
