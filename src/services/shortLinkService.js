@@ -52,9 +52,6 @@ export class ShortLinkService {
         if (!SHORT_CODE_PATTERN.test(code)) {
             throw new InvalidPayloadError('Short code must be 3-64 characters: letters, numbers, underscore, or hyphen');
         }
-        if (await kv.get(code)) {
-            throw new ConflictError('Short code already exists');
-        }
         return code;
     }
 

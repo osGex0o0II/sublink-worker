@@ -235,7 +235,7 @@ proxy-groups:
         expect(await res.text()).toContain('query parameters');
     });
 
-    it('GET /shorten-v2 rejects duplicate custom short codes', async () => {
+    it('GET /shorten-v2 overwrites duplicate custom short codes', async () => {
         const app = createTestApp();
         const firstUrl = encodeURIComponent('http://example.com/singbox?config=one');
         const secondUrl = encodeURIComponent('http://example.com/clash?config=two');
@@ -244,7 +244,7 @@ proxy-groups:
         const second = await app.request(`http://localhost/shorten-v2?url=${secondUrl}&shortCode=fixed-code`);
 
         expect(first.status).toBe(200);
-        expect(second.status).toBe(409);
+        expect(second.status).toBe(200);
     });
 
     it('one short code resolves to each output endpoint prefix', async () => {

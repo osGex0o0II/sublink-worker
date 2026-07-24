@@ -149,9 +149,8 @@ describe('smoke e2e', () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ...shortPayload, shortCode: code })
         });
-        expect(duplicateCode.response.status).toBe(409);
-        expect(duplicateCode.text).toContain('already exists');
-        record('duplicate short code');
+        expect(duplicateCode.response.status).toBe(200);
+        record('duplicate short code overwritten');
 
         const baseConfig = {
             mixed_port: 7890,
