@@ -11,12 +11,10 @@ const createFormDataForRules = () => {
   const fakeWindow = {
     APP_TRANSLATIONS: {},
     PREDEFINED_RULE_SETS: {
-      minimal: ['Non-China'],
-      domestic: ['AI Services', 'Non-China'],
-      balanced: ['Ad Block', 'AI Services', 'Google', 'Youtube', 'Telegram', 'Non-China']
+      basic: ['Google', 'Non-China']
     },
-    MANDATORY_RULES: ['Private', 'Location:CN', 'Github', 'Apple Push'],
-    HIDDEN_RULES: ['Private', 'Location:CN', 'Github', 'Apple Push', 'Non-China'],
+    MANDATORY_RULES: ['Private', 'Location:CN'],
+    HIDDEN_RULES: ['Private', 'Location:CN', 'Non-China'],
     location: {
       origin: 'https://example.com',
       href: 'https://example.com/',
@@ -89,12 +87,12 @@ describe('formLogic toString fix', () => {
     delete globalThis.localStorage;
   });
 
-  it('defaults to the balanced rule preset', () => {
+  it('defaults to the basic rule preset', () => {
     const data = createFormDataForRules();
 
-    expect(data.selectedPredefinedRule).toBe('balanced');
-    expect(data.getRuleSelectionParam()).toBe('balanced');
-    expect(data.getSelectedOptionalRules()).toEqual(['Ad Block', 'AI Services', 'Google', 'Youtube', 'Telegram']);
+    expect(data.selectedPredefinedRule).toBe('basic');
+    expect(data.getRuleSelectionParam()).toBe('basic');
+    expect(data.getSelectedOptionalRules()).toEqual(['Google']);
 
     delete globalThis.localStorage;
   });
@@ -102,11 +100,11 @@ describe('formLogic toString fix', () => {
   it('keeps preset names as the rule selection parameter', () => {
     const data = createFormDataForRules();
 
-    data.selectRulePreset('balanced');
+    data.selectRulePreset('basic');
 
-    expect(data.selectedRules).toEqual(['Ad Block', 'AI Services', 'Google', 'Youtube', 'Telegram']);
-    expect(data.getSelectedOptionalRules()).toEqual(['Ad Block', 'AI Services', 'Google', 'Youtube', 'Telegram']);
-    expect(data.getRuleSelectionParam()).toBe('balanced');
+    expect(data.selectedRules).toEqual(['Google']);
+    expect(data.getSelectedOptionalRules()).toEqual(['Google']);
+    expect(data.getRuleSelectionParam()).toBe('basic');
 
     data.selectCustomRules();
     data.selectedRules = ['Google', 'Telegram'];
@@ -128,12 +126,12 @@ describe('formLogic toString fix', () => {
 
     data.input = 'ss://YWVzLTEyOC1nY206dGVzdA@example.com:443#HK-Test';
     data.customUA = '';
-    data.selectRulePreset('balanced');
+    data.selectRulePreset('basic');
 
     await data.submitForm();
 
-    expect(data.generatedLinks.singbox).toContain('selectedRules=balanced');
-    expect(data.generatedLinks.singbox).not.toContain('Ad+Block');
+    expect(data.generatedLinks.singbox).toContain('selectedRules=basic');
+    expect(data.generatedLinks.singbox).not.toContain('Google');
 
     if (originalDocument === undefined) {
       delete globalThis.document;

@@ -29,94 +29,33 @@ describe('GET /subconverter', () => {
         expect(text).toContain('overwrite_original_rules=true');
     });
 
-    it('defaults to balanced preset when no selectedRules provided', async () => {
+    it('defaults to basic preset when no selectedRules provided', async () => {
         const app = createTestApp();
         const res = await app.request('http://localhost/subconverter');
         const text = await res.text();
 
-        // balanced preset plus mandatory rules includes GitHub, Google, Youtube, AI Services, Telegram, Apple Push, etc.
-        PREDEFINED_RULE_SETS.balanced.forEach(ruleName => {
-            // Each selected rule should produce at least one ruleset line
-            // (either GEOSITE or GEOIP)
+        PREDEFINED_RULE_SETS.basic.forEach(ruleName => {
             expect(text).toMatch(/ruleset=/);
         });
 
-        // Check for specific rules from balanced set
         expect(text).toContain('GEOSITE,google');
-        expect(text).toContain('GEOSITE,github');
-        expect(text).toContain('GEOSITE,youtube');
-        expect(text).toContain('GEOIP,telegram');
-        expect(text).toContain('DOMAIN-SUFFIX,push.apple.com');
-        expect(text).toContain('custom_proxy_group=⚡ 自动选择`url-test`.*`https://www.gstatic.com/generate_204`300,,50');
-        expect(text).toContain('expected-status=200-499');
-        expect(text).toContain('custom_proxy_group=💬 AI 服务`select`[]⚡ 自动选择');
-    });
-
-    it('accepts minimal preset', async () => {
-        const app = createTestApp();
-        const res = await app.request('http://localhost/subconverter?selectedRules=minimal');
-        const text = await res.text();
-
-        // minimal only selects Non-China; mandatory rules are always included.
         expect(text).toContain('GEOSITE,geolocation-cn');
         expect(text).toContain('GEOIP,private');
         expect(text).toContain('GEOSITE,geolocation-!cn');
-        expect(text).toContain('DOMAIN-SUFFIX,push.apple.com');
+    });
 
-        // Should NOT contain rules outside minimal
-        expect(text).not.toContain('GEOSITE,google');
+    it('accepts basic preset', async () => {
+        const app = createTestApp();
+        const res = await app.request('http://localhost/subconverter?selectedRules=basic');
+        const text = await res.text();
+
+        expect(text).toContain('GEOSITE,geolocation-cn');
+        expect(text).toContain('GEOIP,private');
+        expect(text).toContain('GEOSITE,google');
+        expect(text).toContain('GEOSITE,geolocation-!cn');
+
         expect(text).not.toContain('GEOSITE,youtube');
-    });
-
-    it('accepts domestic preset', async () => {
-        const app = createTestApp();
-        const res = await app.request('http://localhost/subconverter?selectedRules=domestic');
-        const text = await res.text();
-
-        expect(text).toContain('GEOSITE,geolocation-cn');
-        expect(text).toContain('GEOIP,private');
-        expect(text).toContain('GEOSITE,geolocation-!cn');
-        expect(text).toContain('DOMAIN-SUFFIX,push.apple.com');
-        expect(text).toContain('GEOSITE,category-ai-!cn');
-        expect(text).toContain('custom_proxy_group=⚡ 自动选择`url-test`.*`https://www.gstatic.com/generate_204`300,,50');
-        expect(text).toContain('expected-status=200-499');
-    });
-
-    it('accepts media preset', async () => {
-        const app = createTestApp();
-        const res = await app.request('http://localhost/subconverter?selectedRules=media');
-        const text = await res.text();
-
-        expect(text).toContain('DOMAIN-SUFFIX,push.apple.com');
-        expect(text).toContain('GEOSITE,youtube');
-        expect(text).toContain('GEOSITE,netflix');
-        expect(text).toContain('GEOSITE,twitter');
-    });
-
-    it('accepts comprehensive preset', async () => {
-        const app = createTestApp();
-        const res = await app.request('http://localhost/subconverter?selectedRules=comprehensive');
-        const text = await res.text();
-
-        // comprehensive includes all rules
-        expect(text).toContain('GEOSITE,category-ads-all');
-        expect(text).toContain('GEOSITE,category-ai-!cn');
-        expect(text).toContain('GEOSITE,google');
-        expect(text).toContain('GEOSITE,bilibili');
-        expect(text).toContain('GEOSITE,youtube');
-        expect(text).toContain('GEOSITE,netflix');
-        expect(text).toContain('GEOSITE,steam');
-        expect(text).toContain('GEOIP,telegram');
-    });
-
-    it('accepts full preset', async () => {
-        const app = createTestApp();
-        const res = await app.request('http://localhost/subconverter?selectedRules=full');
-        const text = await res.text();
-
-        expect(text).toContain('GEOSITE,category-ads-all');
-        expect(text).toContain('DOMAIN-SUFFIX,push.apple.com');
-        expect(text).toContain('GEOSITE,apple');
+        expect(text).not.toContain('GEOSITE,netflix');
     });
 
     it('accepts JSON array for selectedRules', async () => {
@@ -141,7 +80,7 @@ describe('GET /subconverter', () => {
         const customRules = JSON.stringify([
             { name: 'LAN', src_ip_cidr: '192.168.1.13/32' }
         ]);
-        const res = await app.request(`http://localhost/subconverter?selectedRules=minimal&customRules=${encodeURIComponent(customRules)}`);
+        const res = await app.request(`http://localhost/subconverter?selectedRules=basic&customRules=${encodeURIComponent(customRules)}`);
         const text = await res.text();
 
         expect(text).toContain('ruleset=LAN,[]SRC-IP-CIDR,192.168.1.13/32');
@@ -149,7 +88,7 @@ describe('GET /subconverter', () => {
 
     it('generates correct proxy group structure', async () => {
         const app = createTestApp();
-        const res = await app.request('http://localhost/subconverter?selectedRules=minimal');
+        const res = await app.request('http://localhost/subconverter?selectedRules=basic');
         const text = await res.text();
 
         // Auto Select contains auto selection first and manual nodes after it
@@ -201,7 +140,7 @@ describe('GET /subconverter', () => {
 
     it('respects include_auto_select=false', async () => {
         const app = createTestApp();
-        const res = await app.request('http://localhost/subconverter?selectedRules=minimal&include_auto_select=false');
+        const res = await app.request('http://localhost/subconverter?selectedRules=basic&include_auto_select=false');
         const text = await res.text();
 
         // Should NOT have Auto Select group
@@ -229,7 +168,7 @@ describe('GET /subconverter', () => {
 
     it('supports lang parameter for i18n', async () => {
         const app = createTestApp();
-        const res = await app.request('http://localhost/subconverter?selectedRules=minimal&lang=en');
+        const res = await app.request('http://localhost/subconverter?selectedRules=basic&lang=en');
         const text = await res.text();
 
         // English translations
@@ -240,7 +179,7 @@ describe('GET /subconverter', () => {
     describe('group_by_country=true', () => {
         it('generates country groups with regex patterns', async () => {
             const app = createTestApp();
-            const res = await app.request('http://localhost/subconverter?selectedRules=minimal&group_by_country=true');
+            const res = await app.request('http://localhost/subconverter?selectedRules=basic&group_by_country=true');
             const text = await res.text();
 
             // Should contain country url-test groups with (?i) flag and \b boundaries for ASCII aliases
@@ -251,7 +190,7 @@ describe('GET /subconverter', () => {
 
         it('generates Manual Select group with all nodes', async () => {
             const app = createTestApp();
-            const res = await app.request('http://localhost/subconverter?selectedRules=minimal&group_by_country=true');
+            const res = await app.request('http://localhost/subconverter?selectedRules=basic&group_by_country=true');
             const text = await res.text();
 
             // Manual Select group should select auto and country groups
@@ -260,7 +199,7 @@ describe('GET /subconverter', () => {
 
         it('Manual Select references country groups instead of .*', async () => {
             const app = createTestApp();
-            const res = await app.request('http://localhost/subconverter?selectedRules=minimal&group_by_country=true');
+            const res = await app.request('http://localhost/subconverter?selectedRules=basic&group_by_country=true');
             const text = await res.text();
 
             const nodeSelectLine = text.split('\n').find(l => l.includes('手动选择') && l.includes('`select`'));
@@ -290,7 +229,7 @@ describe('GET /subconverter', () => {
 
         it('works with groupByCountry and include_auto_select=false', async () => {
             const app = createTestApp();
-            const res = await app.request('http://localhost/subconverter?selectedRules=minimal&group_by_country=true&include_auto_select=false');
+            const res = await app.request('http://localhost/subconverter?selectedRules=basic&group_by_country=true&include_auto_select=false');
             const text = await res.text();
 
             // Should NOT have Auto Select
@@ -305,7 +244,7 @@ describe('GET /subconverter', () => {
 
         it('generates all 30 country groups', async () => {
             const app = createTestApp();
-            const res = await app.request('http://localhost/subconverter?selectedRules=minimal&group_by_country=true');
+            const res = await app.request('http://localhost/subconverter?selectedRules=basic&group_by_country=true');
             const text = await res.text();
 
             const countryGroupCount = (text.match(/custom_proxy_group=.+`url-test`\(\?i\)\(.+\)`http/g) || []).length;
@@ -314,7 +253,7 @@ describe('GET /subconverter', () => {
 
         it('uses English group names with lang=en', async () => {
             const app = createTestApp();
-            const res = await app.request('http://localhost/subconverter?selectedRules=minimal&group_by_country=true&lang=en');
+            const res = await app.request('http://localhost/subconverter?selectedRules=basic&group_by_country=true&lang=en');
             const text = await res.text();
 
             expect(text).toContain('Manual Select');
@@ -332,9 +271,7 @@ describe('GET /subconverter', () => {
             const text = await res.text();
             expect(text).toContain('Invalid selectedRules');
             expect(text).toContain('balancde');
-            expect(text).toContain('domestic');
-            expect(text).toContain('media');
-            expect(text).toContain('full');
+            expect(text).toContain('basic');
         });
 
         it('returns 400 for non-JSON non-preset string', async () => {
@@ -354,14 +291,14 @@ describe('GET /subconverter', () => {
             expect(text).toContain('must be a preset name');
         });
 
-        it('defaults to balanced when selectedRules is not provided', async () => {
+        it('defaults to basic when selectedRules is not provided', async () => {
             const app = createTestApp();
             const res = await app.request('http://localhost/subconverter');
             expect(res.status).toBe(200);
             const text = await res.text();
-            // balanced preset includes Google and Youtube
+            // basic preset includes Google and Non-China
             expect(text).toContain('GEOSITE,google');
-            expect(text).toContain('GEOSITE,youtube');
+            expect(text).toContain('GEOSITE,geolocation-!cn');
         });
     });
 });

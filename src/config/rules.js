@@ -91,7 +91,7 @@ export const UNIFIED_RULES = [
 	}
 ];
 
-export const MANDATORY_RULES = ['Private', 'Location:CN', 'Github', 'Apple Push'];
+export const MANDATORY_RULES = ['Private', 'Location:CN'];
 export const BASE_RULES = MANDATORY_RULES;
 export const HIDDEN_RULES = [...MANDATORY_RULES, 'Non-China'];
 export const AI_AUTO_TEST_URL = 'https://www.gstatic.com/generate_204';
@@ -101,12 +101,7 @@ export const TRANSPARENT_RULES = new Set([...DIRECT_DEFAULT_RULES, ...NODE_SELEC
 export const REJECT_ACTION_RULES = new Set(['Ad Block']);
 
 export const PREDEFINED_RULE_SETS = {
-	domestic: ['AI Services', 'Non-China'],
-	balanced: ['Ad Block', 'AI Services', 'Google', 'Youtube', 'Telegram', 'Non-China'],
-	media: ['Ad Block', 'Youtube', 'Streaming', 'Social Media', 'Telegram', 'Non-China'],
-	full: UNIFIED_RULES.map(rule => rule.name),
-	minimal: ['Non-China'],
-	comprehensive: UNIFIED_RULES.map(rule => rule.name)
+	basic: ['Google', 'Non-China'],
 };
 
 // Generate SITE_RULE_SETS and IP_RULE_SETS from UNIFIED_RULES

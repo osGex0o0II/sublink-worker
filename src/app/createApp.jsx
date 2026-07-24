@@ -266,7 +266,7 @@ export function createApp(bindings = {}) {
             let selectedRules;
 
             if (!rawSelectedRules) {
-                selectedRules = PREDEFINED_RULE_SETS.balanced;
+                selectedRules = PREDEFINED_RULE_SETS.basic;
             } else if (PREDEFINED_RULE_SETS[rawSelectedRules]) {
                 selectedRules = PREDEFINED_RULE_SETS[rawSelectedRules];
             } else {
@@ -534,9 +534,8 @@ export function parseSelectedRules(raw) {
         const parsed = JSON.parse(raw);
         return Array.isArray(parsed) ? parsed : [];
     } catch {
-        // 解析失败，回退到 minimal 预设
-        console.warn(`Failed to parse selectedRules: ${raw}, falling back to minimal`);
-        return PREDEFINED_RULE_SETS.minimal;
+        console.warn(`Failed to parse selectedRules: ${raw}, falling back to basic`);
+        return PREDEFINED_RULE_SETS.basic;
     }
 }
 

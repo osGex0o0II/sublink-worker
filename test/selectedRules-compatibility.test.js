@@ -1,18 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { BASE_RULES, MANDATORY_RULES, PREDEFINED_RULE_SETS, generateRules } from '../src/config/index.js';
+import { MANDATORY_RULES, PREDEFINED_RULE_SETS, generateRules } from '../src/config/index.js';
 import { parseSelectedRules } from '../src/app/createApp.jsx';
 
-/**
- * Test for backward compatibility fix:
- * Ensures selectedRules parameter accepts both preset names and JSON arrays
- */
-
-describe('selectedRules backward compatibility', () => {
-    it('should keep mandatory routing rules out of presets', () => {
-        expect(MANDATORY_RULES).toEqual(expect.arrayContaining(['Private', 'Location:CN', 'Github', 'Apple Push']));
-        expect(BASE_RULES).toBe(MANDATORY_RULES);
-        expect(PREDEFINED_RULE_SETS.balanced).not.toContain('Github');
-        expect(PREDEFINED_RULE_SETS.balanced).not.toContain('Apple Push');
+describe('selectedRules compatibility', () => {
+    it('should keep only essential mandatory routing rules', () => {
+        expect(MANDATORY_RULES).toEqual(expect.arrayContaining(['Private', 'Location:CN']));
+        expect(MANDATORY_RULES).not.toContain('Github');
+        expect(MANDATORY_RULES).not.toContain('Apple Push');
     });
 
     it('should not mutate custom rule order when generating rules', () => {
@@ -21,48 +15,16 @@ describe('selectedRules backward compatibility', () => {
             { name: 'Second', domain_suffix: 'second.example' }
         ];
 
-        generateRules('minimal', customRules);
+        generateRules('basic', customRules);
 
         expect(customRules.map(rule => rule.name)).toEqual(['First', 'Second']);
     });
 
-    it('should accept "minimal" preset name', () => {
-        const result = parseSelectedRules('minimal');
-        expect(result).toEqual(PREDEFINED_RULE_SETS.minimal);
+    it('should accept "basic" preset name', () => {
+        const result = parseSelectedRules('basic');
+        expect(result).toEqual(PREDEFINED_RULE_SETS.basic);
         expect(result).toContain('Non-China');
-    });
-
-    it('should accept "domestic" preset name', () => {
-        const result = parseSelectedRules('domestic');
-        expect(result).toEqual(PREDEFINED_RULE_SETS.domestic);
-        expect(result).toEqual(['AI Services', 'Non-China']);
-    });
-
-    it('should accept "balanced" preset name', () => {
-        const result = parseSelectedRules('balanced');
-        expect(result).toEqual(PREDEFINED_RULE_SETS.balanced);
-        expect(result.length).toBeGreaterThan(PREDEFINED_RULE_SETS.minimal.length);
-        expect(result).not.toContain('Apple Push');
-        expect(result).not.toContain('Github');
-    });
-
-    it('should accept "media" preset name', () => {
-        const result = parseSelectedRules('media');
-        expect(result).toEqual(PREDEFINED_RULE_SETS.media);
-        expect(result).toContain('Streaming');
-        expect(result).toContain('Social Media');
-    });
-
-    it('should accept "comprehensive" preset name', () => {
-        const result = parseSelectedRules('comprehensive');
-        expect(result).toEqual(PREDEFINED_RULE_SETS.comprehensive);
-        expect(result.length).toBeGreaterThanOrEqual(PREDEFINED_RULE_SETS.balanced.length);
-    });
-
-    it('should accept "full" preset name', () => {
-        const result = parseSelectedRules('full');
-        expect(result).toEqual(PREDEFINED_RULE_SETS.full);
-        expect(result).toEqual(PREDEFINED_RULE_SETS.comprehensive);
+        expect(result).toContain('Google');
     });
 
     it('should parse valid JSON array', () => {
@@ -86,14 +48,14 @@ describe('selectedRules backward compatibility', () => {
         expect(result).toEqual([]);
     });
 
-    it('should fallback to minimal for invalid JSON', () => {
+    it('should fallback to basic for invalid JSON', () => {
         const result = parseSelectedRules('invalid-json-{[');
-        expect(result).toEqual(PREDEFINED_RULE_SETS.minimal);
+        expect(result).toEqual(PREDEFINED_RULE_SETS.basic);
     });
 
-    it('should fallback to minimal for unknown preset name', () => {
+    it('should fallback to basic for unknown preset name', () => {
         const result = parseSelectedRules('unknown-preset');
-        expect(result).toEqual(PREDEFINED_RULE_SETS.minimal);
+        expect(result).toEqual(PREDEFINED_RULE_SETS.basic);
     });
 
     it('should return empty array if JSON is not an array', () => {

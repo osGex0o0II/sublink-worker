@@ -372,10 +372,10 @@ describe('Sing-Box JSON input parsing', () => {
         ))).toBe(true);
     });
 
-    it('should include base rules and default service rules in balanced preset', async () => {
+    it('should include base rules and default service rules in basic preset', async () => {
         const builder = new SingboxConfigBuilder(
             sampleSingboxConfig,
-            'balanced',
+            'basic',
             [],
             null,
             'zh-CN',
@@ -386,16 +386,9 @@ describe('Sing-Box JSON input parsing', () => {
         const result = await builder.build();
 
         expect(result.route.rules).toEqual(expect.arrayContaining([
-            expect.objectContaining({
-                domain_suffix: ['push.apple.com'],
-                outbound: '🖐️ 手动选择'
-            })
-        ]));
-        expect(result.route.rules).toEqual(expect.arrayContaining([
             expect.objectContaining({ rule_set: ['private-ip'], outbound: 'DIRECT' }),
-            expect.objectContaining({ rule_set: ['github', 'gitlab'], outbound: '🖐️ 手动选择' }),
             expect.objectContaining({ rule_set: ['geolocation-!cn'], outbound: '🖐️ 手动选择' }),
-            expect.objectContaining({ rule_set: ['category-ai-!cn'], outbound: '💬 AI 服务' })
+            expect.objectContaining({ rule_set: ['google'], outbound: '🔍 谷歌服务' })
         ]));
         expect(result.route.final).toBe('🖐️ 手动选择');
         expect(result.route.rules).toEqual(expect.arrayContaining([
@@ -409,8 +402,7 @@ describe('Sing-Box JSON input parsing', () => {
             }),
             expect.objectContaining({
                 type: 'selector',
-                tag: '💬 AI 服务',
-                outbounds: expect.arrayContaining(['⚡ 自动选择'])
+                tag: '🔍 谷歌服务'
             })
         ]));
         const manualGroup = result.outbounds.find(outbound => outbound?.tag === '🖐️ 手动选择');

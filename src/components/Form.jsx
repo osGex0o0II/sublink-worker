@@ -13,7 +13,7 @@ const LINK_FIELDS = [
   { key: 'surge', labelKey: 'surgeLink', short: 'SG' }
 ];
 
-const RULE_PRESET_KEYS = ['minimal', 'domestic', 'balanced', 'media', 'comprehensive'];
+const RULE_PRESET_KEYS = ['basic'];
 const VISIBLE_RULES = UNIFIED_RULES.filter(rule => !HIDDEN_RULES.includes(rule.name));
 const SUMMARY_RULES = UNIFIED_RULES.filter(rule => !MANDATORY_RULES.includes(rule.name));
 

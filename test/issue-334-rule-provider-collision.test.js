@@ -9,7 +9,7 @@ ss://YWVzLTEyOC1nY206dGVzdA@example.com:444#US-Node-1
 
 describe('Issue #334: rule-provider key collision fix', () => {
   it('google site provider should not be overwritten by ip provider', async () => {
-    const builder = new ClashConfigBuilder(SS_INPUT, 'balanced', [], null, 'zh-CN', 'mihomo/1.0');
+    const builder = new ClashConfigBuilder(SS_INPUT, 'basic', [], null, 'zh-CN', 'mihomo/1.0');
     const yamlText = await builder.build();
     const config = yaml.load(yamlText);
     const providers = config['rule-providers'];
@@ -26,7 +26,7 @@ describe('Issue #334: rule-provider key collision fix', () => {
   });
 
   it('cn site provider should not be overwritten by ip provider', async () => {
-    const builder = new ClashConfigBuilder(SS_INPUT, 'balanced', [], null, 'zh-CN', 'mihomo/1.0');
+    const builder = new ClashConfigBuilder(SS_INPUT, 'basic', [], null, 'zh-CN', 'mihomo/1.0');
     const yamlText = await builder.build();
     const config = yaml.load(yamlText);
     const providers = config['rule-providers'];
@@ -41,7 +41,7 @@ describe('Issue #334: rule-provider key collision fix', () => {
   });
 
   it('rules should reference correct provider keys', async () => {
-    const builder = new ClashConfigBuilder(SS_INPUT, 'balanced', [], null, 'zh-CN', 'mihomo/1.0');
+    const builder = new ClashConfigBuilder(SS_INPUT, 'basic', [], null, 'zh-CN', 'mihomo/1.0');
     const yamlText = await builder.build();
     const config = yaml.load(yamlText);
 
@@ -54,7 +54,7 @@ describe('Issue #334: rule-provider key collision fix', () => {
   });
 
   it('google domain rule should come before non-china rule', async () => {
-    const builder = new ClashConfigBuilder(SS_INPUT, 'balanced', [], null, 'zh-CN', 'mihomo/1.0');
+    const builder = new ClashConfigBuilder(SS_INPUT, 'basic', [], null, 'zh-CN', 'mihomo/1.0');
     const yamlText = await builder.build();
     const config = yaml.load(yamlText);
 

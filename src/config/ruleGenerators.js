@@ -31,12 +31,16 @@ function createSingboxRemoteRuleSet(tag, url) {
 }
 
 export function normalizeSelectedRules(selectedRules = []) {
-	if (typeof selectedRules === 'string' && PREDEFINED_RULE_SETS[selectedRules]) {
-		selectedRules = PREDEFINED_RULE_SETS[selectedRules];
+	if (typeof selectedRules === 'string') {
+		if (PREDEFINED_RULE_SETS[selectedRules]) {
+			selectedRules = PREDEFINED_RULE_SETS[selectedRules];
+		} else {
+			selectedRules = PREDEFINED_RULE_SETS.basic;
+		}
 	}
 
 	if (!selectedRules || selectedRules.length === 0) {
-		selectedRules = PREDEFINED_RULE_SETS.minimal;
+		selectedRules = PREDEFINED_RULE_SETS.basic;
 	}
 
 	return [...new Set([...MANDATORY_RULES, ...selectedRules])];

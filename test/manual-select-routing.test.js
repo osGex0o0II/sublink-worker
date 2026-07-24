@@ -5,7 +5,7 @@ const proxyInput = 'ss://YWVzLTEyOC1nY206cGFzcw@example.com:443#ManualNode';
 
 describe('manual select routing target', () => {
     it('routes default proxy traffic through Manual Select while defaulting to Auto Select', async () => {
-        const builder = new SingboxConfigBuilder(proxyInput, 'minimal', [], null, 'zh-CN', 'sing-box');
+        const builder = new SingboxConfigBuilder(proxyInput, 'basic', [], null, 'zh-CN', 'sing-box');
 
         const config = await builder.build();
 
