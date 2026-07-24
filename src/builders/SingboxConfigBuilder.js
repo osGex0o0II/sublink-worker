@@ -757,7 +757,7 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
                 return;
             }
             if (!Array.isArray(this.config.http_clients) || this.config.http_clients.length === 0) {
-                this.config.http_clients = [{ tag: RULE_SET_HTTP_CLIENT_TAG, detour: 'DIRECT' }];
+                this.config.http_clients = [{ tag: RULE_SET_HTTP_CLIENT_TAG }];
             }
             this.config.route.default_http_client = this.config.http_clients[0].tag;
             return;

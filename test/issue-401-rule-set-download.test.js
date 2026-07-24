@@ -55,7 +55,7 @@ describe('sing-box rule-set download detour', () => {
             expect(rs).not.toHaveProperty('download_detour');
             expect(rs).not.toHaveProperty('http_client');
         });
-        expect(result.http_clients).toEqual([{ tag: 'rule-set-download', detour: 'DIRECT' }]);
+        expect(result.http_clients).toEqual([{ tag: 'rule-set-download' }]);
         expect(result.route.default_http_client).toBe('rule-set-download');
     });
 
