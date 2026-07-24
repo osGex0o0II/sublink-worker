@@ -598,10 +598,10 @@ function resolveSingboxConfigVersion(requestedVersion, userAgent) {
     const normalizedRequested = typeof requestedVersion === 'string' ? requestedVersion.trim().toLowerCase() : '';
     if (normalizedRequested && normalizedRequested !== 'auto') {
         if (normalizedRequested === 'legacy') return '1.11';
-        if (normalizedRequested === 'latest') return '1.12';
+        if (normalizedRequested === 'latest') return '1.14';
         const parsed = parseSemverLike(normalizedRequested);
         if (parsed) {
-            return isSingboxLegacyConfig(parsed) ? '1.11' : '1.12';
+            return isSingboxLegacyConfig(parsed) ? '1.11' : '1.14';
         }
     }
 
@@ -610,11 +610,11 @@ function resolveSingboxConfigVersion(requestedVersion, userAgent) {
         const versionString = uaMatch?.[1];
         const parsed = versionString ? parseSemverLike(versionString) : null;
         if (parsed) {
-            return isSingboxLegacyConfig(parsed) ? '1.11' : '1.12';
+            return isSingboxLegacyConfig(parsed) ? '1.11' : '1.14';
         }
     }
 
-    return '1.12';
+    return '1.14';
 }
 
 function getRequestHeader(request, name) {
