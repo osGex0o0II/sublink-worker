@@ -56,7 +56,8 @@ export const SING_BOX_CONFIG = {
 				rcode: "REFUSED"
 			}
 		],
-		final: "dns_direct"
+		final: "dns_direct",
+		strategy: "prefer_ipv4"
 	},
 	ntp: {
 		enabled: true,
