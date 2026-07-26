@@ -175,10 +175,8 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
                 if (this.hasOutboundTag(tag)) {
                     return;
                 }
-                if (outbound === 'AI Services' && this.includeAutoSelect && this.hasAutoSelectCandidates(proxyList)) {
-                    const autoTag = this.t('outboundNames.Auto Select');
-                    selectorMembers = [autoTag, ...selectorMembers.filter(p => p !== autoTag)];
-                }
+                // AI Services deliberately gets no Auto Select priority: url-test
+                // rotates egress IPs, which trips AI platforms' risk control
                 // For rules that should default to DIRECT, move DIRECT to the front
                 if (DIRECT_DEFAULT_RULES.has(outbound)) {
                     selectorMembers = ['DIRECT', ...selectorMembers.filter(p => p !== 'DIRECT')];
@@ -944,7 +942,11 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
             { action: 'sniff' },
             { protocol: 'dns', action: 'hijack-dns' },
             { clash_mode: 'direct', outbound: 'DIRECT' },
-            { clash_mode: 'global', outbound: defaultProxyTarget }
+            { clash_mode: 'global', outbound: defaultProxyTarget },
+            // Sniffed BT never rides proxy nodes (relaying P2P gets airline
+            // accounts banned); tracker domains are covered by the mandatory
+            // BitTorrent rule-set rule
+            { protocol: 'bittorrent', outbound: 'DIRECT' }
         );
 
         this.config.route.auto_detect_interface = true;

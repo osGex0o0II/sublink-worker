@@ -12,6 +12,13 @@ export const UNIFIED_RULES = [
 		ip_rules: []
 	},
 	{
+		// Keeps BT off proxy nodes (airlines ban accounts for P2P relay);
+		// sing-box additionally matches sniffed protocol, see builder
+		name: 'BitTorrent',
+		site_rules: ['category-public-tracker'],
+		ip_rules: []
+	},
+	{
 		name: 'AI Services',
 		site_rules: ['category-ai-!cn',],
 		ip_rules: []
@@ -60,8 +67,21 @@ export const UNIFIED_RULES = [
 		ip_rules: []
 	},
 	{
+		// Auto-selected with 'Microsoft' (see COMPANION_RULES): CN-hosted
+		// Microsoft services resolve to local CDNs — proxying them is slower
+		name: 'Microsoft CN',
+		site_rules: ['microsoft@cn'],
+		ip_rules: []
+	},
+	{
 		name: 'Microsoft',
 		site_rules: ['microsoft'],
+		ip_rules: []
+	},
+	{
+		// Auto-selected with 'Apple' (see COMPANION_RULES)
+		name: 'Apple CN',
+		site_rules: ['apple@cn'],
 		ip_rules: []
 	},
 	{
@@ -77,7 +97,9 @@ export const UNIFIED_RULES = [
 	{
 		name: 'Streaming',
 		site_rules: ['netflix', 'hulu', 'disney', 'hbo', 'amazon', 'bahamut'],
-		ip_rules: []
+		// Netflix clients hit IPs directly (appboot); without the geoip rule
+		// that traffic escapes to Node Select instead of the unlock group
+		ip_rules: ['netflix']
 	},
 	{
 		name: 'Gaming',
@@ -91,17 +113,24 @@ export const UNIFIED_RULES = [
 	}
 ];
 
-export const MANDATORY_RULES = ['Private', 'Location:CN'];
+export const MANDATORY_RULES = ['Private', 'Location:CN', 'BitTorrent'];
 export const BASE_RULES = MANDATORY_RULES;
-export const HIDDEN_RULES = [...MANDATORY_RULES, 'Non-China'];
+export const HIDDEN_RULES = [...MANDATORY_RULES, 'Non-China', 'Apple CN', 'Microsoft CN'];
 export const AI_AUTO_TEST_URL = 'https://www.gstatic.com/generate_204';
-export const DIRECT_DEFAULT_RULES = new Set(['Private', 'Location:CN']);
+export const DIRECT_DEFAULT_RULES = new Set(['Private', 'Location:CN', 'BitTorrent', 'Apple CN', 'Microsoft CN']);
 export const NODE_SELECT_DEFAULT_RULES = new Set(['Github', 'Apple Push', 'Non-China']);
 export const TRANSPARENT_RULES = new Set([...DIRECT_DEFAULT_RULES, ...NODE_SELECT_DEFAULT_RULES]);
 export const REJECT_ACTION_RULES = new Set(['Ad Block']);
 
+// Rules silently co-selected with their parent: the @cn split only makes
+// sense while the parent rule is active
+export const COMPANION_RULES = {
+	Apple: ['Apple CN'],
+	Microsoft: ['Microsoft CN']
+};
+
 export const PREDEFINED_RULE_SETS = {
-	basic: ['Google', 'Non-China'],
+	basic: ['Ad Block', 'Google', 'Non-China'],
 };
 
 // Presets removed by the basic+custom refactor. Old short links and saved

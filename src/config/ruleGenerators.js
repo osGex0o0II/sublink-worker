@@ -3,7 +3,7 @@
  * Functions for generating rules and rule sets
  */
 
-import { MANDATORY_RULES, UNIFIED_RULES, PREDEFINED_RULE_SETS, resolvePresetRules, SITE_RULE_SETS, IP_RULE_SETS, CLASH_SITE_RULE_SETS, CLASH_IP_RULE_SETS } from './rules.js';
+import { MANDATORY_RULES, UNIFIED_RULES, PREDEFINED_RULE_SETS, resolvePresetRules, COMPANION_RULES, SITE_RULE_SETS, IP_RULE_SETS, CLASH_SITE_RULE_SETS, CLASH_IP_RULE_SETS } from './rules.js';
 import { SITE_RULE_SET_BASE_URL, IP_RULE_SET_BASE_URL, CLASH_SITE_RULE_SET_BASE_URL, CLASH_IP_RULE_SET_BASE_URL } from './ruleUrls.js';
 
 const DEFAULT_RULE_SET_DOWNLOAD_DETOUR = 'DIRECT';
@@ -39,7 +39,8 @@ export function normalizeSelectedRules(selectedRules = []) {
 		selectedRules = PREDEFINED_RULE_SETS.basic;
 	}
 
-	return [...new Set([...MANDATORY_RULES, ...selectedRules])];
+	const companions = selectedRules.flatMap(name => COMPANION_RULES[name] ?? []);
+	return [...new Set([...MANDATORY_RULES, ...selectedRules, ...companions])];
 }
 
 // Helper function to get outbounds based on selected rule names

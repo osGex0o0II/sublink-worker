@@ -96,7 +96,8 @@ ss://YWVzLTEyOC1nY206dGVzdA@example.com:444#JP-Node
     expect(hiddenGroupNames).not.toContain('🤖 AI 自动选择');
     expect(autoGroup?.url).toBe('https://www.gstatic.com/generate_204');
     expect(autoGroup?.['expected-status']).toBe('200-499');
-    expect(aiGroup?.proxies[0]).toBe('⚡ 自动选择');
+    // AI group defaults to manual select: url-test IP rotation trips AI risk control
+    expect(aiGroup?.proxies[0]).toBe('🖐️ 手动选择');
   });
 
   it('sanitizeClashProxyGroups should not remove provider node references when group uses providers', () => {

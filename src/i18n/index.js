@@ -116,6 +116,7 @@ export const translations = {
     // 规则名称和出站名称的翻译
     outboundNames: {
       'Auto Select': '⚡ 自动选择',
+      'BitTorrent': '🧲 BT 下载',
       'AI Auto': '🤖 AI 自动选择',
       'Node Select': '🖐️ 手动选择',
       'Fall Back': '⚡ 自动选择',
@@ -284,6 +285,7 @@ export const translations = {
     jsonValidationErrors: 'JSON validation errors',
     outboundNames: {
       'Auto Select': '⚡ Auto Select',
+      'BitTorrent': '🧲 BitTorrent',
       'AI Auto': '🤖 AI Auto',
       'Node Select': '🖐️ Manual Select',
       'Fall Back': '⚡ Auto Select',
@@ -446,6 +448,7 @@ export const translations = {
     jsonValidationErrors: 'خطاهای اعتبارسنجی JSON',
     outboundNames: {
       'Auto Select': '⚡ انتخاب خودکار',
+      'BitTorrent': '🧲 بیت‌تورنت',
       'AI Auto': '🤖 انتخاب خودکار AI',
       'Node Select': '🖐️ انتخاب دستی',
       'Fall Back': '⚡ انتخاب خودکار',
@@ -608,6 +611,7 @@ export const translations = {
     jsonValidationErrors: 'Ошибки проверки JSON',
     outboundNames: {
       'Auto Select': '⚡ Автовыбор',
+      'BitTorrent': '🧲 BitTorrent',
       'AI Auto': '🤖 AI Автовыбор',
       'Node Select': '🖐️ Ручной выбор',
       'Fall Back': '⚡ Автовыбор',

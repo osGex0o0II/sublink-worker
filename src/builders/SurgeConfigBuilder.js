@@ -291,10 +291,8 @@ export class SurgeConfigBuilder extends BaseConfigBuilder {
                 if (this.hasProxyGroup(name)) {
                     return;
                 }
-                if (outbound === 'AI Services' && this.includeAutoSelect) {
-                    const autoName = this.t('outboundNames.Auto Select');
-                    options = [autoName, ...options.filter(p => p !== autoName)];
-                }
+                // AI Services deliberately gets no Auto Select priority: url-test
+                // rotates egress IPs, which trips AI platforms' risk control
                 // For rules that should default to DIRECT, move DIRECT to the front
                 if (DIRECT_DEFAULT_RULES.has(outbound)) {
                     options = ['DIRECT', ...options.filter(p => p !== 'DIRECT')];

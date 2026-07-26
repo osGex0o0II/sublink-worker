@@ -414,10 +414,8 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
                 const name = this.t(`outboundNames.${outbound}`);
                 if (!this.hasProxyGroup(name)) {
                     let proxies = this.buildSelectGroupMembers(proxyList);
-                    if (outbound === 'AI Services' && this.shouldIncludeAutoSelectGroup(proxyList)) {
-                        const autoName = this.t('outboundNames.Auto Select');
-                        proxies = [autoName, ...proxies.filter(p => p !== autoName)];
-                    }
+                    // AI Services deliberately gets no Auto Select priority: url-test
+                    // rotates egress IPs, which trips AI platforms' risk control
                     // For rules that should default to DIRECT, move DIRECT to the front
                     if (DIRECT_DEFAULT_RULES.has(outbound)) {
                         proxies = ['DIRECT', ...proxies.filter(p => p !== 'DIRECT')];
