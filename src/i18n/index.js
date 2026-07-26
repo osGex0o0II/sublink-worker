@@ -691,7 +691,9 @@ export function createTranslator(lang) {
       value = value?.[k];
       if (value === undefined) {
         if (checkStartsWith(key, 'outboundNames.')) {
-          return key.split('.')[1];
+          // Keep the full remainder: custom rule names may contain dots, and the
+          // returned name must match the group tag built from the raw name.
+          return key.slice('outboundNames.'.length);
         }
         return key;
       }

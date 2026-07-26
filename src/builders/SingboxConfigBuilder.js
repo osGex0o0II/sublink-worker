@@ -29,6 +29,10 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
         return false;
     }
 
+    getConfigFormat() {
+        return 'singbox';
+    }
+
     getAllProviderTags() {
         return [];
     }
@@ -651,8 +655,12 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
             if (!rule || typeof rule !== 'object') return;
             if (Array.isArray(rule.rule_set)) {
                 rule.rule_set = rule.rule_set.map(normalizeRuleSet);
-            } else {
+            } else if (rule.rule_set !== undefined) {
                 rule.rule_set = normalizeRuleSet(rule.rule_set);
+            }
+            // type:logical rules nest sub-rules with their own rule_set refs
+            if (Array.isArray(rule.rules)) {
+                rule.rules.forEach(normalizeRule);
             }
         };
 
@@ -728,6 +736,91 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
         return [...new Set(candidates)];
     }
 
+    ensureDirectOutbound() {
+        this.config.outbounds = this.config.outbounds || [];
+        const hasDirect = this.config.outbounds.some(outbound => outbound?.type === 'direct');
+        if (!hasDirect && !this.hasOutboundTag('DIRECT')) {
+            this.config.outbounds.push({ type: 'direct', tag: 'DIRECT' });
+        }
+    }
+
+    /**
+     * Final safety net: imported configs may carry route/dns rules whose
+     * rule_set or outbound references cannot be resolved (their original
+     * definitions were replaced by generated ones). sing-box refuses to start
+     * on any dangling reference, so re-normalize and drop what cannot be fixed.
+     */
+    pruneDanglingRouteReferences() {
+        const outboundTags = (this.config.outbounds || []).map(outbound => outbound?.tag).filter(Boolean);
+        const ruleSetList = Array.isArray(this.config.route?.rule_set) ? this.config.route.rule_set : [];
+        const definedRuleSets = new Set(ruleSetList.map(ruleSet => ruleSet?.tag).filter(Boolean));
+        const findDirectTag = () => (this.config.outbounds || []).find(outbound => outbound?.type === 'direct')?.tag;
+
+        const hasResolvableRuleSets = (rule) => {
+            if (!rule || typeof rule !== 'object') return true;
+            if (rule.rule_set !== undefined) {
+                const refs = Array.isArray(rule.rule_set) ? rule.rule_set : [rule.rule_set];
+                if (!refs.every(tag => definedRuleSets.has(tag))) return false;
+            }
+            // type:logical rules nest sub-rules; one dead branch kills the whole
+            // rule (safe for both and/or — sing-box rejects any dangling ref)
+            if (Array.isArray(rule.rules)) {
+                return rule.rules.every(hasResolvableRuleSets);
+            }
+            return true;
+        };
+
+        if (Array.isArray(this.config.route?.rules)) {
+            this.config.route.rules = this.config.route.rules.filter(rule => {
+                if (!rule || typeof rule !== 'object') return false;
+                if (!hasResolvableRuleSets(rule)) return false;
+                if (typeof rule.outbound !== 'string') return true;
+                const resolved = this.normalizeReferenceToTag(rule.outbound, outboundTags);
+                if (resolved) {
+                    rule.outbound = resolved;
+                    return true;
+                }
+                if (rule.outbound === 'DIRECT') {
+                    const directTag = findDirectTag();
+                    if (directTag) {
+                        rule.outbound = directTag;
+                        return true;
+                    }
+                }
+                if (normalizeGroupName(rule.outbound) === normalizeGroupName('REJECT')) {
+                    // Legacy REJECT outbound → rule action (sing-box 1.11+)
+                    delete rule.outbound;
+                    rule.action = 'reject';
+                    return true;
+                }
+                return false;
+            });
+        }
+
+        if (Array.isArray(this.config.dns?.rules)) {
+            this.config.dns.rules = this.config.dns.rules.filter(rule => {
+                if (!rule || typeof rule !== 'object') return false;
+                return hasResolvableRuleSets(rule);
+            });
+        }
+
+        // download_detour must reference a real outbound too (fatal before 1.14)
+        ruleSetList.forEach(ruleSet => {
+            if (!ruleSet || ruleSet.download_detour === undefined) return;
+            const resolved = this.normalizeReferenceToTag(ruleSet.download_detour, outboundTags);
+            if (resolved) {
+                ruleSet.download_detour = resolved;
+                return;
+            }
+            const directTag = findDirectTag();
+            if (directTag) {
+                ruleSet.download_detour = directTag;
+            } else {
+                delete ruleSet.download_detour;
+            }
+        });
+    }
+
     buildRouteTarget(rule) {
         if (REJECT_ACTION_RULES.has(rule?.outbound) || rule?.outbound === 'REJECT') {
             return { action: 'reject' };
@@ -774,6 +867,7 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
         const { site_rule_sets, ip_rule_sets } = generateRuleSets(this.selectedRules, this.customRules);
 
         this.config.route.rule_set = [...site_rule_sets, ...ip_rule_sets];
+        this.ensureDirectOutbound();
         this.configureRuleSetDownload();
 
         delete this.config.outbound_providers;
@@ -797,50 +891,46 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
             return false;
         };
 
-        rules.filter(rule => Array.isArray(rule.src_ip_cidr) && rule.src_ip_cidr.length > 0).map(rule => {
+        const pushRouteRule = (entry, rule) => {
             this.config.route.rules.push(attachProtocolIfNeeded({
-                source_ip_cidr: rule.src_ip_cidr,
+                ...entry,
                 ...this.buildRouteTarget(rule)
             }, rule));
+        };
+
+        // Three passes: source rules, then domain-type rules, then IP-type
+        // rules. Within each pass rules keep their original order so custom
+        // rules stay ahead of predefined ones for every match type.
+        rules.forEach(rule => {
+            if (Array.isArray(rule.src_ip_cidr) && rule.src_ip_cidr.length > 0) {
+                pushRouteRule({ source_ip_cidr: rule.src_ip_cidr }, rule);
+            }
         });
 
-        rules.filter(rule => hasMatchValues(rule.domain_suffix) || hasMatchValues(rule.domain_keyword)).map(rule => {
-            const entry = {
-                ...this.buildRouteTarget(rule)
-            };
-
-            if (hasMatchValues(rule.domain_suffix)) entry.domain_suffix = rule.domain_suffix;
-            if (hasMatchValues(rule.domain_keyword)) entry.domain_keyword = rule.domain_keyword;
-
-            this.config.route.rules.push(attachProtocolIfNeeded(entry, rule));
+        rules.forEach(rule => {
+            if (hasMatchValues(rule.domain_suffix) || hasMatchValues(rule.domain_keyword)) {
+                const entry = {};
+                if (hasMatchValues(rule.domain_suffix)) entry.domain_suffix = rule.domain_suffix;
+                if (hasMatchValues(rule.domain_keyword)) entry.domain_keyword = rule.domain_keyword;
+                pushRouteRule(entry, rule);
+            }
+            if (Array.isArray(rule.site_rules) && rule.site_rules[0]) {
+                pushRouteRule({ rule_set: [...rule.site_rules] }, rule);
+            }
         });
 
-        rules.filter(rule => !!rule.site_rules[0]).map(rule => {
-            this.config.route.rules.push(attachProtocolIfNeeded({
-                rule_set: [
-                    ...(rule.site_rules.length > 0 && rule.site_rules[0] !== '' ? rule.site_rules : []),
-                ],
-                ...this.buildRouteTarget(rule)
-            }, rule));
-        });
-
-        rules.filter(rule => !!rule.ip_rules[0]).map(rule => {
-            this.config.route.rules.push(attachProtocolIfNeeded({
-                rule_set: [
-                    ...(rule.ip_rules
+        rules.forEach(rule => {
+            if (Array.isArray(rule.ip_rules) && rule.ip_rules[0]) {
+                pushRouteRule({
+                    rule_set: rule.ip_rules
                         .map(ip => ip.trim())
                         .filter(ip => ip !== '')
-                        .map(ip => `${ip}-ip`))
-                ],
-                ...this.buildRouteTarget(rule)
-            }, rule));
-        });
-
-        rules.filter(rule => hasMatchValues(rule.ip_cidr)).map(rule => {
-            this.config.route.rules.push(attachProtocolIfNeeded({
-                ip_cidr: rule.ip_cidr,
-                ...this.buildRouteTarget(rule)
-            }, rule));
+                        .map(ip => `${ip}-ip`)
+                }, rule);
+            }
+            if (hasMatchValues(rule.ip_cidr)) {
+                pushRouteRule({ ip_cidr: rule.ip_cidr }, rule);
+            }
         });
 
         // Order matters: sniff first so downstream rules can match on protocol;
@@ -860,6 +950,7 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
         this.config.route.auto_detect_interface = true;
         this.config.route.final = defaultProxyTarget;
         this.normalizeRuleSetReferences();
+        this.pruneDanglingRouteReferences();
         // 如果启用了 Clash UI，添加配置
         // 如果启用 Clash UI 或传入了自定义参数，添加/覆盖 Clash API 配置
         if (this.enableClashUI || this.externalController || this.externalUiDownloadUrl) {

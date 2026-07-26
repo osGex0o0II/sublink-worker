@@ -3,7 +3,7 @@
  * Functions for generating rules and rule sets
  */
 
-import { MANDATORY_RULES, UNIFIED_RULES, PREDEFINED_RULE_SETS, SITE_RULE_SETS, IP_RULE_SETS, CLASH_SITE_RULE_SETS, CLASH_IP_RULE_SETS } from './rules.js';
+import { MANDATORY_RULES, UNIFIED_RULES, PREDEFINED_RULE_SETS, resolvePresetRules, SITE_RULE_SETS, IP_RULE_SETS, CLASH_SITE_RULE_SETS, CLASH_IP_RULE_SETS } from './rules.js';
 import { SITE_RULE_SET_BASE_URL, IP_RULE_SET_BASE_URL, CLASH_SITE_RULE_SET_BASE_URL, CLASH_IP_RULE_SET_BASE_URL } from './ruleUrls.js';
 
 const DEFAULT_RULE_SET_DOWNLOAD_DETOUR = 'DIRECT';
@@ -32,11 +32,7 @@ function createSingboxRemoteRuleSet(tag, url) {
 
 export function normalizeSelectedRules(selectedRules = []) {
 	if (typeof selectedRules === 'string') {
-		if (PREDEFINED_RULE_SETS[selectedRules]) {
-			selectedRules = PREDEFINED_RULE_SETS[selectedRules];
-		} else {
-			selectedRules = PREDEFINED_RULE_SETS.basic;
-		}
+		selectedRules = resolvePresetRules(selectedRules) ?? PREDEFINED_RULE_SETS.basic;
 	}
 
 	if (!selectedRules || selectedRules.length === 0) {
@@ -96,8 +92,6 @@ export function generateRuleSets(selectedRules = [], customRules = []) {
 	const siteRuleSets = new Set();
 	const ipRuleSets = new Set();
 
-	const ruleSets = [];
-
 	UNIFIED_RULES.forEach(rule => {
 		if (selectedRulesSet.has(rule.name)) {
 			rule.site_rules.forEach(siteRule => siteRuleSets.add(siteRule));
@@ -134,8 +128,6 @@ export function generateRuleSets(selectedRules = [], customRules = []) {
 			});
 		});
 	}
-
-	ruleSets.push(...site_rule_sets, ...ip_rule_sets);
 
 	return { site_rule_sets, ip_rule_sets };
 }
@@ -185,17 +177,9 @@ export function generateClashRuleSets(selectedRules = [], customRules = [], useM
 		};
 	});
 
-	// Add Non-China rule set if not included
-	if (!selectedRules.includes('Non-China')) {
-		site_rule_providers['geolocation-!cn'] = {
-			type: 'http',
-			format: format,
-			behavior: 'domain',
-			url: `${CLASH_SITE_RULE_SET_BASE_URL}geolocation-!cn${ext}`,
-			path: `./ruleset/geolocation-!cn${ext}`,
-			interval: 86400
-		};
-	}
+	// Unlike sing-box (whose base DNS rules consume geolocation-!cn), Clash's
+	// DNS policy uses the geosite: engine, so no forced provider is needed here
+	// — an unreferenced provider would only waste client downloads.
 
 	// Add custom rules
 	if (customRules) {

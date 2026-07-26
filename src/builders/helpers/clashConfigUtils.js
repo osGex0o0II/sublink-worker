@@ -12,54 +12,53 @@ export function emitClashRules(rules = [], translator, fallbackTarget = translat
         throw new Error('emitClashRules requires a translator function');
     }
     const results = [];
+    const hasValues = (value) => Array.isArray(value) && value.length > 0;
 
-    rules
-        .filter(rule => Array.isArray(rule.src_ip_cidr) && rule.src_ip_cidr.length > 0)
-        .forEach(rule => {
-            rule.src_ip_cidr.forEach(cidr => {
-                if (!cidr) return;
-                results.push(`SRC-IP-CIDR,${cidr},${getRuleTarget(rule, translator, fallbackTarget)}`);
-            });
+    // Three passes: source rules, then domain-type rules, then IP-type rules
+    // (domain before IP avoids resolving domains that a domain rule already
+    // covers). Within each pass rules keep their original order so custom
+    // rules stay ahead of predefined ones for every match type.
+    rules.forEach(rule => {
+        if (!hasValues(rule.src_ip_cidr)) return;
+        const target = getRuleTarget(rule, translator, fallbackTarget);
+        rule.src_ip_cidr.forEach(cidr => {
+            if (!cidr) return;
+            results.push(`SRC-IP-CIDR,${cidr},${target}`);
         });
-    rules
-        .filter(rule => Array.isArray(rule.domain_suffix) && rule.domain_suffix.length > 0)
-        .forEach(rule => {
+    });
+
+    rules.forEach(rule => {
+        const target = getRuleTarget(rule, translator, fallbackTarget);
+        if (hasValues(rule.domain_suffix)) {
             rule.domain_suffix.forEach(suffix => {
-                results.push(`DOMAIN-SUFFIX,${suffix},${getRuleTarget(rule, translator, fallbackTarget)}`);
+                results.push(`DOMAIN-SUFFIX,${suffix},${target}`);
             });
-        });
-
-    rules
-        .filter(rule => Array.isArray(rule.domain_keyword) && rule.domain_keyword.length > 0)
-        .forEach(rule => {
+        }
+        if (hasValues(rule.domain_keyword)) {
             rule.domain_keyword.forEach(keyword => {
-                results.push(`DOMAIN-KEYWORD,${keyword},${getRuleTarget(rule, translator, fallbackTarget)}`);
+                results.push(`DOMAIN-KEYWORD,${keyword},${target}`);
             });
-        });
-
-    rules
-        .filter(rule => Array.isArray(rule.site_rules) && rule.site_rules[0])
-        .forEach(rule => {
+        }
+        if (hasValues(rule.site_rules) && rule.site_rules[0]) {
             rule.site_rules.forEach(site => {
-                results.push(`RULE-SET,${site},${getRuleTarget(rule, translator, fallbackTarget)}`);
+                results.push(`RULE-SET,${site},${target}`);
             });
-        });
+        }
+    });
 
-    rules
-        .filter(rule => Array.isArray(rule.ip_rules) && rule.ip_rules[0])
-        .forEach(rule => {
+    rules.forEach(rule => {
+        const target = getRuleTarget(rule, translator, fallbackTarget);
+        if (hasValues(rule.ip_rules) && rule.ip_rules[0]) {
             rule.ip_rules.forEach(ip => {
-                results.push(`RULE-SET,${ip}-ip,${getRuleTarget(rule, translator, fallbackTarget)},no-resolve`);
+                results.push(`RULE-SET,${ip}-ip,${target},no-resolve`);
             });
-        });
-
-    rules
-        .filter(rule => Array.isArray(rule.ip_cidr) && rule.ip_cidr.length > 0)
-        .forEach(rule => {
+        }
+        if (hasValues(rule.ip_cidr)) {
             rule.ip_cidr.forEach(cidr => {
-                results.push(`IP-CIDR,${cidr},${getRuleTarget(rule, translator, fallbackTarget)},no-resolve`);
+                results.push(`IP-CIDR,${cidr},${target},no-resolve`);
             });
-        });
+        }
+    });
 
     return results;
 }

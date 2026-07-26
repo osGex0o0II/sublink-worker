@@ -20,6 +20,10 @@ export class SurgeConfigBuilder extends BaseConfigBuilder {
         return this;
     }
 
+    getConfigFormat() {
+        return 'surge';
+    }
+
     getProxies() {
         return this.config.proxies || [];
     }
@@ -416,10 +420,12 @@ export class SurgeConfigBuilder extends BaseConfigBuilder {
 
         finalConfig.push('\n[Rule]');
 
-        // Rule-Set & Domain Rules & IP Rules:  To reduce DNS leaks and unnecessary DNS queries,
-        // domain & non-IP rules must precede IP rules
-
-        rules.filter(rule => Array.isArray(rule.src_ip_cidr) && rule.src_ip_cidr.length > 0).map(rule => {
+        // Three passes: source rules, then domain-type rules, then IP-type
+        // rules (domain before IP reduces DNS leaks and unnecessary DNS
+        // queries). Within each pass rules keep their original order so
+        // custom rules stay ahead of predefined ones for every match type.
+        rules.forEach(rule => {
+            if (!Array.isArray(rule.src_ip_cidr) || rule.src_ip_cidr.length === 0) return;
             rule.src_ip_cidr.forEach(cidr => {
                 const value = typeof cidr === 'string' ? cidr.trim() : cidr;
                 if (!value) return;
@@ -438,34 +444,35 @@ export class SurgeConfigBuilder extends BaseConfigBuilder {
             });
         });
 
-        rules.filter(rule => !!rule.domain_suffix).map(rule => {
-            rule.domain_suffix.forEach(suffix => {
-                finalConfig.push(`DOMAIN-SUFFIX,${suffix},${this.getRuleTarget(rule)}`);
-            });
+        rules.forEach(rule => {
+            if (Array.isArray(rule.domain_suffix)) {
+                rule.domain_suffix.forEach(suffix => {
+                    finalConfig.push(`DOMAIN-SUFFIX,${suffix},${this.getRuleTarget(rule)}`);
+                });
+            }
+            if (Array.isArray(rule.domain_keyword)) {
+                rule.domain_keyword.forEach(keyword => {
+                    finalConfig.push(`DOMAIN-KEYWORD,${keyword},${this.getRuleTarget(rule)}`);
+                });
+            }
+            if (Array.isArray(rule.site_rules) && rule.site_rules[0]) {
+                rule.site_rules.forEach(site => {
+                    finalConfig.push(`RULE-SET,${SURGE_SITE_RULE_SET_BASEURL}${site}.conf,${this.getRuleTarget(rule)}`);
+                });
+            }
         });
 
-        rules.filter(rule => !!rule.domain_keyword).map(rule => {
-            rule.domain_keyword.forEach(keyword => {
-                finalConfig.push(`DOMAIN-KEYWORD,${keyword},${this.getRuleTarget(rule)}`);
-            });
-        });
-
-        rules.filter(rule => rule.site_rules[0] !== '').map(rule => {
-            rule.site_rules.forEach(site => {
-                finalConfig.push(`RULE-SET,${SURGE_SITE_RULE_SET_BASEURL}${site}.conf,${this.getRuleTarget(rule)}`);
-            });
-        });
-
-        rules.filter(rule => rule.ip_rules[0] !== '').map(rule => {
-            rule.ip_rules.forEach(ip => {
-                finalConfig.push(`RULE-SET,${SURGE_IP_RULE_SET_BASEURL}${ip}.txt,${this.getRuleTarget(rule)},no-resolve`);
-            });
-        });
-
-        rules.filter(rule => !!rule.ip_cidr).map(rule => {
-            rule.ip_cidr.forEach(cidr => {
-                finalConfig.push(`IP-CIDR,${cidr},${this.getRuleTarget(rule)},no-resolve`);
-            });
+        rules.forEach(rule => {
+            if (Array.isArray(rule.ip_rules) && rule.ip_rules[0]) {
+                rule.ip_rules.forEach(ip => {
+                    finalConfig.push(`RULE-SET,${SURGE_IP_RULE_SET_BASEURL}${ip}.txt,${this.getRuleTarget(rule)},no-resolve`);
+                });
+            }
+            if (Array.isArray(rule.ip_cidr)) {
+                rule.ip_cidr.forEach(cidr => {
+                    finalConfig.push(`IP-CIDR,${cidr},${this.getRuleTarget(rule)},no-resolve`);
+                });
+            }
         });
 
         finalConfig.push('FINAL,' + this.getDefaultProxyTarget());

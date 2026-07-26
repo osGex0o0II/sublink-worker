@@ -16,13 +16,13 @@ import { ShortLinkService } from '../services/shortLinkService.js';
 import { ConfigStorageService } from '../services/configStorageService.js';
 import { ServiceError, MissingDependencyError } from '../services/errors.js';
 import { normalizeRuntime } from '../runtime/runtimeConfig.js';
-import { PREDEFINED_RULE_SETS, SING_BOX_CONFIG, SING_BOX_CONFIG_V1_11, generateSubconverterConfig } from '../config/index.js';
+import { PREDEFINED_RULE_SETS, resolvePresetRules, SING_BOX_CONFIG, SING_BOX_CONFIG_V1_11, generateSubconverterConfig } from '../config/index.js';
 import { fetchTextResource } from '../parsers/subscription/safeFetch.js';
 
+const VALID_RULE_PRESETS = Object.keys(PREDEFINED_RULE_SETS).join(', ');
 const DEFAULT_USER_AGENT = 'curl/7.74.0';
 const MAX_XRAY_REMOTE_SUBSCRIPTIONS = 8;
 const MAX_CONFIG_BODY_BYTES = 1024 * 1024;
-const VALID_RULE_PRESETS = Object.keys(PREDEFINED_RULE_SETS).join(', ');
 const RATE_LIMITS = {
     shortLinks: { limit: 60, windowSeconds: 60 },
     configWrites: { limit: 20, windowSeconds: 60 }
@@ -204,13 +204,13 @@ export function createApp(bindings = {}) {
                 externalUiDownloadUrl,
                 includeAutoSelect
             );
-            await builder.build();
+            const output = await builder.build();
             const userinfo = builder.getSubscriptionUserinfo();
             const headers = { 'Content-Type': 'text/yaml; charset=utf-8' };
             if (userinfo) {
                 headers['subscription-userinfo'] = userinfo;
             }
-            return c.text(builder.formatConfig(), 200, headers);
+            return c.text(output, 200, headers);
         } catch (error) {
             return handleError(c, error, runtime.logger);
         }
@@ -248,13 +248,13 @@ export function createApp(bindings = {}) {
                 includeAutoSelect
             );
             builder.setSubscriptionUrl(c.req.url);
-            await builder.build();
+            const output = await builder.build();
 
             const userinfo = builder.getSubscriptionUserinfo();
             if (userinfo) {
                 c.header('subscription-userinfo', userinfo);
             }
-            return c.text(builder.formatConfig());
+            return c.text(output);
         } catch (error) {
             return handleError(c, error, runtime.logger);
         }
@@ -262,14 +262,18 @@ export function createApp(bindings = {}) {
 
     app.get('/subconverter', (c) => {
         try {
+            // Unlike subscription endpoints (which silently fall back so client
+            // polling never breaks), this endpoint is used interactively — fail
+            // loudly on garbage, but accept legacy preset names.
             const rawSelectedRules = c.req.query('selectedRules');
             let selectedRules;
 
             if (!rawSelectedRules) {
                 selectedRules = PREDEFINED_RULE_SETS.basic;
-            } else if (PREDEFINED_RULE_SETS[rawSelectedRules]) {
-                selectedRules = PREDEFINED_RULE_SETS[rawSelectedRules];
             } else {
+                selectedRules = resolvePresetRules(rawSelectedRules);
+            }
+            if (!selectedRules) {
                 try {
                     const parsed = JSON.parse(rawSelectedRules);
                     if (Array.isArray(parsed)) {
@@ -523,10 +527,11 @@ export function createApp(bindings = {}) {
 export function parseSelectedRules(raw) {
     if (!raw) return [];
 
-    // 首先检查是否是预设名称 (minimal, balanced, comprehensive)
-    // 这确保向后兼容主分支的 API 行为
-    if (typeof raw === 'string' && PREDEFINED_RULE_SETS[raw]) {
-        return PREDEFINED_RULE_SETS[raw];
+    // Preset names first — including legacy ones (minimal/balanced/... ) that
+    // old short links still carry, so they keep their historical rule sets.
+    if (typeof raw === 'string') {
+        const preset = resolvePresetRules(raw);
+        if (preset) return preset;
     }
 
     // 尝试解析为 JSON 数组

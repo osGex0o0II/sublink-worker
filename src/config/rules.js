@@ -104,6 +104,22 @@ export const PREDEFINED_RULE_SETS = {
 	basic: ['Google', 'Non-China'],
 };
 
+// Presets removed by the basic+custom refactor. Old short links and saved
+// URLs still carry these names, so keep resolving them to their historical
+// rule sets instead of silently downgrading everyone to `basic`.
+export const LEGACY_PRESET_RULE_SETS = {
+	domestic: ['AI Services', 'Non-China'],
+	balanced: ['Ad Block', 'AI Services', 'Google', 'Youtube', 'Telegram', 'Non-China'],
+	media: ['Ad Block', 'Youtube', 'Streaming', 'Social Media', 'Telegram', 'Non-China'],
+	full: UNIFIED_RULES.map(rule => rule.name),
+	minimal: ['Non-China'],
+	comprehensive: UNIFIED_RULES.map(rule => rule.name)
+};
+
+export function resolvePresetRules(name) {
+	return PREDEFINED_RULE_SETS[name] ?? LEGACY_PRESET_RULE_SETS[name];
+}
+
 // Generate SITE_RULE_SETS and IP_RULE_SETS from UNIFIED_RULES
 export const SITE_RULE_SETS = UNIFIED_RULES.reduce((acc, rule) => {
 	rule.site_rules.forEach(site_rule => {

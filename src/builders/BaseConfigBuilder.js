@@ -7,6 +7,14 @@ import { isSystemGeneratedGroupName } from './helpers/groupNameUtils.js';
 
 const MAX_REMOTE_SUBSCRIPTIONS = 8;
 
+// Maps parseSubscriptionContent result types to the config format the
+// overrides were written in, so builders can reject cross-format keys.
+const OVERRIDE_SOURCE_BY_TYPE = {
+    yamlConfig: 'clash',
+    singboxConfig: 'singbox',
+    surgeConfig: 'surge'
+};
+
 export class BaseConfigBuilder {
     constructor(inputString, baseConfig, lang, userAgent, groupByCountry = false, includeAutoSelect = true) {
         this.inputString = inputString;
@@ -15,7 +23,6 @@ export class BaseConfigBuilder {
         this.selectedRules = [];
         this.t = createTranslator(lang);
         this.userAgent = userAgent;
-        this.appliedOverrideKeys = new Set();
         this.groupByCountry = groupByCountry;
         this.includeAutoSelect = includeAutoSelect;
         this.providerUrls = [];  // URLs to use as providers (auto-sync)
@@ -44,7 +51,7 @@ export class BaseConfigBuilder {
         if (directResult && typeof directResult === 'object' && directResult.type) {
             // It's a parsed config (singboxConfig or yamlConfig)
             if (directResult.config) {
-                this.applyConfigOverrides(directResult.config);
+                this.applyConfigOverrides(directResult.config, OVERRIDE_SOURCE_BY_TYPE[directResult.type]);
             }
             if (Array.isArray(directResult.proxies)) {
                 for (const proxy of directResult.proxies) {
@@ -66,7 +73,7 @@ export class BaseConfigBuilder {
                     const decodedResult = parseSubscriptionContent(decodedWhole);
                     if (decodedResult && typeof decodedResult === 'object' && decodedResult.type) {
                         if (decodedResult.config) {
-                            this.applyConfigOverrides(decodedResult.config);
+                            this.applyConfigOverrides(decodedResult.config, OVERRIDE_SOURCE_BY_TYPE[decodedResult.type]);
                         }
                         if (Array.isArray(decodedResult.proxies)) {
                             for (const proxy of decodedResult.proxies) {
@@ -124,7 +131,7 @@ export class BaseConfigBuilder {
                             const result = parseSubscriptionContent(content);
                             if (result && typeof result === 'object' && (result.type === 'yamlConfig' || result.type === 'singboxConfig' || result.type === 'surgeConfig')) {
                                 if (result.config) {
-                                    this.applyConfigOverrides(result.config);
+                                    this.applyConfigOverrides(result.config, OVERRIDE_SOURCE_BY_TYPE[result.type]);
                                 }
                                 if (Array.isArray(result.proxies)) {
                                     result.proxies.forEach(proxy => {
@@ -160,7 +167,7 @@ export class BaseConfigBuilder {
                 // Handle yamlConfig, singboxConfig, and surgeConfig types (they have the same structure)
                 if (result && typeof result === 'object' && (result.type === 'yamlConfig' || result.type === 'singboxConfig' || result.type === 'surgeConfig')) {
                     if (result.config) {
-                        this.applyConfigOverrides(result.config);
+                        this.applyConfigOverrides(result.config, OVERRIDE_SOURCE_BY_TYPE[result.type]);
                     }
                     if (Array.isArray(result.proxies)) {
                         result.proxies.forEach(proxy => {
@@ -257,10 +264,23 @@ export class BaseConfigBuilder {
         return descriptors;
     }
 
-    applyConfigOverrides(overrides) {
+    /**
+     * Which config format this builder's output uses ('singbox'|'clash'|'surge').
+     * Cross-format overrides are dropped: a Clash sub's top-level keys are
+     * meaningless (or fatal — sing-box rejects unknown JSON fields) in another
+     * client's config. Only the group structure survives via proxy-groups merge.
+     */
+    getConfigFormat() {
+        return undefined;
+    }
+
+    applyConfigOverrides(overrides, sourceFormat) {
         if (!overrides || typeof overrides !== 'object') {
             return;
         }
+
+        const targetFormat = this.getConfigFormat();
+        const crossFormat = Boolean(sourceFormat && targetFormat && sourceFormat !== targetFormat);
 
         // Block keys that are handled specially:
         // - 'proxies': handled by dedicated parser
@@ -268,22 +288,21 @@ export class BaseConfigBuilder {
         // - 'proxy-groups': stored for later intelligent merge (not direct override)
         const blacklistedKeys = new Set(['proxies', 'rules', 'rule-providers', 'proxy-groups']);
 
-        Object.entries(overrides).forEach(([key, value]) => {
-            if (blacklistedKeys.has(key)) {
-                return;
-            }
-            if (value === undefined) {
-                delete this.config[key];
-                this.appliedOverrideKeys.add(key);
-            } else if (key === 'dns' && typeof value === 'object' && !Array.isArray(value)) {
-                // Special handling for dns object - merge array fields instead of overwriting
-                this.config[key] = this.mergeDnsConfig(this.config[key], value);
-                this.appliedOverrideKeys.add(key);
-            } else {
-                this.config[key] = deepCopy(value);
-                this.appliedOverrideKeys.add(key);
-            }
-        });
+        if (!crossFormat) {
+            Object.entries(overrides).forEach(([key, value]) => {
+                if (blacklistedKeys.has(key)) {
+                    return;
+                }
+                if (value === undefined) {
+                    delete this.config[key];
+                } else if (key === 'dns' && typeof value === 'object' && !Array.isArray(value)) {
+                    // Special handling for dns object - merge array fields instead of overwriting
+                    this.config[key] = this.mergeDnsConfig(this.config[key], value);
+                } else {
+                    this.config[key] = deepCopy(value);
+                }
+            });
+        }
 
         // Store user proxy-groups for later merge (after system groups are created)
         if (Array.isArray(overrides['proxy-groups'])) {
@@ -327,10 +346,6 @@ export class BaseConfigBuilder {
         });
 
         return result;
-    }
-
-    hasConfigOverride(key) {
-        return this.appliedOverrideKeys?.has(key);
     }
 
     getSubscriptionUserinfo() {
