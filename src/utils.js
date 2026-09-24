@@ -243,6 +243,15 @@ export function deepCopy(obj) {
 	return newObj;
 }
 
+export function sanitizeRuleName(value) {
+	if (typeof value !== 'string') return undefined;
+	const name = value.trim();
+	if (!name || name.length > 128) return undefined;
+	if (/^[\s#;]/.test(name) || /[\u0000-\u001F\u007F\[\],=`]/.test(name)) return undefined;
+	if (['DIRECT', 'REJECT'].includes(name.toUpperCase())) return undefined;
+	return name;
+}
+
 export function generateWebPath(length = PATH_LENGTH) {
 	const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
 	if (!globalThis.crypto?.getRandomValues) {

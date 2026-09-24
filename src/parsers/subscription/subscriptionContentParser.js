@@ -118,11 +118,14 @@ function parseInterval(interval) {
 export function parseClashYaml(content) {
     try {
         const parsed = yaml.load(content);
-        if (parsed && typeof parsed === 'object' && Array.isArray(parsed.proxies)) {
-            const proxies = parsed.proxies
-                .map(p => convertYamlProxyToObject(p))
-                .filter(p => p != null);
-            if (proxies.length > 0) {
+        const hasProviders = parsed && typeof parsed === 'object'
+            && parsed['proxy-providers'] && typeof parsed['proxy-providers'] === 'object'
+            && Object.keys(parsed['proxy-providers']).length > 0;
+        if (parsed && typeof parsed === 'object' && (Array.isArray(parsed.proxies) || hasProviders)) {
+            const proxies = Array.isArray(parsed.proxies)
+                ? parsed.proxies.map(p => convertYamlProxyToObject(p)).filter(p => p != null)
+                : [];
+            if (proxies.length > 0 || hasProviders) {
                 const configOverrides = deepCopy(parsed);
                 delete configOverrides.proxies;
                 return {
@@ -133,7 +136,7 @@ export function parseClashYaml(content) {
             }
         }
     } catch (e) {
-        // Not valid YAML or doesn't have proxies array
+        // Not valid YAML or doesn't have a supported proxy source
     }
     return null;
 }

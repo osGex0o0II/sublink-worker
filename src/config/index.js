@@ -28,11 +28,21 @@ export {
 	NODE_SELECT_DEFAULT_RULES,
 	TRANSPARENT_RULES,
 	REJECT_ACTION_RULES,
+	COMPANION_RULES,
 	SITE_RULE_SETS,
 	IP_RULE_SETS,
 	CLASH_SITE_RULE_SETS,
 	CLASH_IP_RULE_SETS
 } from './rules.js';
+
+export {
+	DEFAULT_RULE_SCHEME_ID,
+	RULE_SCHEMES,
+	RULE_SCHEME_ALIASES,
+	getRuleScheme,
+	resolveRuleScheme,
+	validateRuleScheme
+} from './ruleSchemes.js';
 
 // Rule Generators
 export {
@@ -40,7 +50,8 @@ export {
 	getOutbounds,
 	generateRules,
 	generateRuleSets,
-	generateClashRuleSets
+	generateClashRuleSets,
+	sanitizeCustomRules
 } from './ruleGenerators.js';
 
 // Subconverter Config

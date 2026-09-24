@@ -167,21 +167,6 @@ export function generateSubconverterConfig({ selectedRules = [], customRules = [
 			lines.push(`custom_proxy_group=${groupName}\`select\`[]REJECT\`[]DIRECT`);
 		} else if (DIRECT_DEFAULT_RULES.has(rule.outbound)) {
 			lines.push(`custom_proxy_group=${groupName}\`select\`[]DIRECT\`[]${manualSelectName}`);
-		} else if (rule.outbound === 'AI Services') {
-			if (groupByCountry) {
-				const refs = buildCountryGroupRefs(countryGroupNames);
-				if (includeAutoSelect) {
-					lines.push(`custom_proxy_group=${groupName}\`select\`[]${autoSelectName}\`[]${manualSelectName}\`${refs}\`[]DIRECT`);
-				} else {
-					lines.push(`custom_proxy_group=${groupName}\`select\`[]${manualSelectName}\`${refs}\`[]DIRECT`);
-				}
-			} else {
-				if (includeAutoSelect) {
-					lines.push(`custom_proxy_group=${groupName}\`select\`[]${autoSelectName}\`[]${manualSelectName}\`[]DIRECT\`.*`);
-				} else {
-					lines.push(`custom_proxy_group=${groupName}\`select\`[]${manualSelectName}\`[]DIRECT\`.*`);
-				}
-			}
 		} else {
 			if (groupByCountry) {
 				const refs = buildCountryGroupRefs(countryGroupNames);

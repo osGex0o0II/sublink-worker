@@ -1,7 +1,7 @@
 import { ProxyParser } from '../parsers/index.js';
 import { createStableProviderName, deepCopy, tryDecodeSubscriptionLines, decodeBase64 } from '../utils.js';
 import { createTranslator } from '../i18n/index.js';
-import { generateRules, getOutbounds, PREDEFINED_RULE_SETS } from '../config/index.js';
+import { generateRules, getOutbounds, sanitizeCustomRules } from '../config/index.js';
 import { isInformationalProxy } from './helpers/proxyHelpers.js';
 import { isSystemGeneratedGroupName } from './helpers/groupNameUtils.js';
 
@@ -59,7 +59,7 @@ export class BaseConfigBuilder {
                         parsedItems.push(proxy);
                     }
                 }
-                if (parsedItems.length > 0) return parsedItems;
+                if (parsedItems.length > 0 || directResult.config) return parsedItems;
             }
         }
 
@@ -81,7 +81,7 @@ export class BaseConfigBuilder {
                                     parsedItems.push(proxy);
                                 }
                             }
-                            if (parsedItems.length > 0) return parsedItems;
+                            if (parsedItems.length > 0 || decodedResult.config) return parsedItems;
                         }
                     }
                 }
@@ -353,15 +353,7 @@ export class BaseConfigBuilder {
     }
 
     getOutboundsList() {
-        let outbounds;
-        if (typeof this.selectedRules === 'string' && PREDEFINED_RULE_SETS[this.selectedRules]) {
-            outbounds = getOutbounds(PREDEFINED_RULE_SETS[this.selectedRules]);
-        } else if (this.selectedRules && Object.keys(this.selectedRules).length > 0) {
-            outbounds = getOutbounds(this.selectedRules);
-        } else {
-            outbounds = getOutbounds(PREDEFINED_RULE_SETS.basic);
-        }
-        return outbounds;
+        return getOutbounds(this.selectedRules);
     }
 
     getProxyList() {

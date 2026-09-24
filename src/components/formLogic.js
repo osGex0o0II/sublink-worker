@@ -82,7 +82,7 @@ export const formLogicFn = (t) => {
                 ua: false          // User Agent
             },
             selectedRules: [],
-            selectedPredefinedRule: 'basic',
+            selectedPredefinedRule: 'smart-v1',
             subconverterCopied: false,
             groupByCountry: false,
             includeAutoSelect: true,
@@ -140,8 +140,15 @@ export const formLogicFn = (t) => {
                 this.configEditor = localStorage.getItem('configEditor') || '';
                 this.configType = localStorage.getItem('configType') || 'singbox';
                 this.customShortCode = localStorage.getItem('customShortCode') || '';
-                this.selectedPredefinedRule = localStorage.getItem('selectedPredefinedRule') || this.selectedPredefinedRule;
-                this.selectedRules = this.parseSavedRules(localStorage.getItem('selectedRules'));
+                const savedPreset = localStorage.getItem('selectedPredefinedRule');
+                const legacyRules = window.LEGACY_PRESET_RULE_SETS?.[savedPreset];
+                if (Array.isArray(legacyRules)) {
+                    this.selectedPredefinedRule = 'custom';
+                    this.selectedRules = this.withoutBaseRules(legacyRules);
+                } else {
+                    this.selectedPredefinedRule = this.normalizePresetId(savedPreset || this.selectedPredefinedRule);
+                    this.selectedRules = this.parseSavedRules(localStorage.getItem('selectedRules'));
+                }
                 const initialUrlParams = new URLSearchParams(window.location.search);
                 this.currentConfigId = initialUrlParams.get('configId') || '';
 
@@ -184,6 +191,35 @@ export const formLogicFn = (t) => {
                 this.$watch('accordionSections', val => localStorage.setItem('accordionSections', JSON.stringify(val)), { deep: true });
             },
 
+            getRuleSchemes() {
+                return window.RULE_SCHEMES || {};
+            },
+
+            getRuleSchemeAliases() {
+                return window.RULE_SCHEME_ALIASES || {};
+            },
+
+            normalizePresetId(value) {
+                if (value === 'custom') return 'custom';
+                const schemes = this.getRuleSchemes();
+                if (Object.keys(schemes).length === 0) {
+                    return value && window.PREDEFINED_RULE_SETS?.[value] ? value : 'basic';
+                }
+                const aliases = this.getRuleSchemeAliases();
+                const id = aliases[value] || value;
+                if (schemes[id]) return id;
+                return window.DEFAULT_RULE_SCHEME_ID || 'smart-v1';
+            },
+
+            getPresetRules(preset) {
+                const schemes = this.getRuleSchemes();
+                const aliases = this.getRuleSchemeAliases();
+                const id = aliases[preset] || preset;
+                if (Array.isArray(schemes[id]?.rules)) return schemes[id].rules;
+                const legacyPresets = window.PREDEFINED_RULE_SETS || {};
+                return Array.isArray(legacyPresets[preset]) ? legacyPresets[preset] : [];
+            },
+
             toggleAccordion(section) {
                 this.accordionSections[section] = !this.accordionSections[section];
             },
@@ -191,15 +227,14 @@ export const formLogicFn = (t) => {
             applyPredefinedRule() {
                 if (this.selectedPredefinedRule === 'custom') return;
 
-                // PREDEFINED_RULE_SETS will be injected globally
-                const rules = window.PREDEFINED_RULE_SETS;
-                if (rules && rules[this.selectedPredefinedRule]) {
-                    this.selectedRules = this.withoutBaseRules(rules[this.selectedPredefinedRule]);
+                const rules = this.getPresetRules(this.selectedPredefinedRule);
+                if (rules.length > 0) {
+                    this.selectedRules = this.withoutBaseRules(rules);
                 }
             },
 
             selectRulePreset(preset) {
-                this.selectedPredefinedRule = preset;
+                this.selectedPredefinedRule = this.normalizePresetId(preset);
                 this.applyPredefinedRule();
             },
 
@@ -223,9 +258,9 @@ export const formLogicFn = (t) => {
             },
 
             getSelectedOptionalRules() {
-                const rules = window.PREDEFINED_RULE_SETS || {};
-                if (this.selectedPredefinedRule && this.selectedPredefinedRule !== 'custom' && rules[this.selectedPredefinedRule]) {
-                    return this.withoutBaseRules(rules[this.selectedPredefinedRule]);
+                if (this.selectedPredefinedRule && this.selectedPredefinedRule !== 'custom') {
+                    const rules = this.getPresetRules(this.selectedPredefinedRule);
+                    if (rules.length > 0) return this.withoutBaseRules(rules);
                 }
                 return this.withoutBaseRules(this.selectedRules);
             },
@@ -235,8 +270,7 @@ export const formLogicFn = (t) => {
             },
 
             getRuleSelectionParam() {
-                const rules = window.PREDEFINED_RULE_SETS || {};
-                if (this.selectedPredefinedRule && this.selectedPredefinedRule !== 'custom' && rules[this.selectedPredefinedRule]) {
+                if (this.selectedPredefinedRule && this.selectedPredefinedRule !== 'custom') {
                     return this.selectedPredefinedRule;
                 }
                 return JSON.stringify(this.selectedRules);
@@ -633,19 +667,28 @@ export const formLogicFn = (t) => {
                 // Extract selectedRules
                 const selectedRules = params.get('selectedRules');
                 if (selectedRules) {
-                    const presets = window.PREDEFINED_RULE_SETS || {};
-                    if (presets[selectedRules]) {
-                        this.selectedPredefinedRule = selectedRules;
-                        this.selectedRules = this.withoutBaseRules(presets[selectedRules]);
+                    const schemes = this.getRuleSchemes();
+                    const aliases = this.getRuleSchemeAliases();
+                    const schemeId = aliases[selectedRules] || selectedRules;
+                    if (schemes[schemeId]) {
+                        this.selectedPredefinedRule = schemeId;
+                        this.selectedRules = this.withoutBaseRules(schemes[schemeId].rules);
                     } else {
-                        try {
-                            const parsed = JSON.parse(selectedRules);
-                            if (Array.isArray(parsed)) {
-                                this.selectedRules = this.withoutBaseRules(parsed);
-                                this.selectedPredefinedRule = 'custom';
+                        const legacyPresets = window.LEGACY_PRESET_RULE_SETS || {};
+                        const legacyRules = legacyPresets[selectedRules] || window.PREDEFINED_RULE_SETS?.[selectedRules];
+                        if (Array.isArray(legacyRules)) {
+                            this.selectedPredefinedRule = 'custom';
+                            this.selectedRules = this.withoutBaseRules(legacyRules);
+                        } else {
+                            try {
+                                const parsed = JSON.parse(selectedRules);
+                                if (Array.isArray(parsed)) {
+                                    this.selectedRules = this.withoutBaseRules(parsed);
+                                    this.selectedPredefinedRule = 'custom';
+                                }
+                            } catch (e) {
+                                console.warn('Failed to parse selectedRules:', e);
                             }
-                        } catch (e) {
-                            console.warn('Failed to parse selectedRules:', e);
                         }
                     }
                 }

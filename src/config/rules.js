@@ -133,6 +133,28 @@ export const PREDEFINED_RULE_SETS = {
 	basic: ['Ad Block', 'Google', 'Non-China'],
 };
 
+const LEGACY_FULL_RULES = [
+	'Ad Block',
+	'BitTorrent',
+	'AI Services',
+	'Bilibili',
+	'Youtube',
+	'Google',
+	'Apple Push',
+	'Private',
+	'Location:CN',
+	'Telegram',
+	'Github',
+	'Microsoft CN',
+	'Microsoft',
+	'Apple CN',
+	'Apple',
+	'Social Media',
+	'Streaming',
+	'Gaming',
+	'Non-China'
+];
+
 // Presets removed by the basic+custom refactor. Old short links and saved
 // URLs still carry these names, so keep resolving them to their historical
 // rule sets instead of silently downgrading everyone to `basic`.
@@ -140,9 +162,9 @@ export const LEGACY_PRESET_RULE_SETS = {
 	domestic: ['AI Services', 'Non-China'],
 	balanced: ['Ad Block', 'AI Services', 'Google', 'Youtube', 'Telegram', 'Non-China'],
 	media: ['Ad Block', 'Youtube', 'Streaming', 'Social Media', 'Telegram', 'Non-China'],
-	full: UNIFIED_RULES.map(rule => rule.name),
+	full: LEGACY_FULL_RULES,
 	minimal: ['Non-China'],
-	comprehensive: UNIFIED_RULES.map(rule => rule.name)
+	comprehensive: LEGACY_FULL_RULES
 };
 
 export function resolvePresetRules(name) {

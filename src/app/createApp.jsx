@@ -16,10 +16,14 @@ import { ShortLinkService } from '../services/shortLinkService.js';
 import { ConfigStorageService } from '../services/configStorageService.js';
 import { ServiceError, MissingDependencyError } from '../services/errors.js';
 import { normalizeRuntime } from '../runtime/runtimeConfig.js';
-import { PREDEFINED_RULE_SETS, resolvePresetRules, SING_BOX_CONFIG, SING_BOX_CONFIG_V1_11, generateSubconverterConfig } from '../config/index.js';
+import { PREDEFINED_RULE_SETS, RULE_SCHEMES, RULE_SCHEME_ALIASES, resolvePresetRules, SING_BOX_CONFIG, SING_BOX_CONFIG_V1_11, generateSubconverterConfig } from '../config/index.js';
 import { fetchTextResource } from '../parsers/subscription/safeFetch.js';
 
-const VALID_RULE_PRESETS = Object.keys(PREDEFINED_RULE_SETS).join(', ');
+const VALID_RULE_PRESETS = [...new Set([
+    ...Object.keys(PREDEFINED_RULE_SETS),
+    ...Object.keys(RULE_SCHEMES),
+    ...Object.keys(RULE_SCHEME_ALIASES)
+])].join(', ');
 const DEFAULT_USER_AGENT = 'curl/7.74.0';
 const MAX_XRAY_REMOTE_SUBSCRIPTIONS = 8;
 const MAX_CONFIG_BODY_BYTES = 1024 * 1024;
@@ -271,7 +275,8 @@ export function createApp(bindings = {}) {
             if (!rawSelectedRules) {
                 selectedRules = PREDEFINED_RULE_SETS.basic;
             } else {
-                selectedRules = resolvePresetRules(rawSelectedRules);
+                const schemeId = RULE_SCHEME_ALIASES[rawSelectedRules] || rawSelectedRules;
+                selectedRules = RULE_SCHEMES[schemeId]?.rules || resolvePresetRules(rawSelectedRules);
             }
             if (!selectedRules) {
                 try {
@@ -530,6 +535,10 @@ export function parseSelectedRules(raw) {
     // Preset names first — including legacy ones (minimal/balanced/... ) that
     // old short links still carry, so they keep their historical rule sets.
     if (typeof raw === 'string') {
+        const schemeId = RULE_SCHEME_ALIASES[raw] || raw;
+        if (RULE_SCHEMES[schemeId]) {
+            return RULE_SCHEMES[schemeId].rules;
+        }
         const preset = resolvePresetRules(raw);
         if (preset) return preset;
     }

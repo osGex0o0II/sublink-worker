@@ -1,6 +1,6 @@
 /** @jsxRuntime automatic */
 /** @jsxImportSource hono/jsx */
-import { DIRECT_DEFAULT_RULES, HIDDEN_RULES, MANDATORY_RULES, PREDEFINED_RULE_SETS, REJECT_ACTION_RULES, UNIFIED_RULES } from '../config/index.js';
+import { COMPANION_RULES, DEFAULT_RULE_SCHEME_ID, DIRECT_DEFAULT_RULES, HIDDEN_RULES, LEGACY_PRESET_RULE_SETS, MANDATORY_RULES, PREDEFINED_RULE_SETS, REJECT_ACTION_RULES, RULE_SCHEMES, RULE_SCHEME_ALIASES, UNIFIED_RULES } from '../config/index.js';
 import { CustomRules } from './CustomRules.jsx';
 import { TextareaWithActions } from './TextareaWithActions.jsx';
 import { ValidatedTextarea } from './ValidatedTextarea.jsx';
@@ -13,7 +13,7 @@ const LINK_FIELDS = [
   { key: 'surge', labelKey: 'surgeLink', short: 'SG' }
 ];
 
-const RULE_PRESET_KEYS = ['basic'];
+const RULE_SCHEME_KEYS = Object.keys(RULE_SCHEMES);
 const VISIBLE_RULES = UNIFIED_RULES.filter(rule => !HIDDEN_RULES.includes(rule.name));
 const SUMMARY_RULES = UNIFIED_RULES.filter(rule => !MANDATORY_RULES.includes(rule.name));
 
@@ -23,9 +23,11 @@ const getRuleTargetLabelKey = (ruleName) => {
   return 'proxyRoute';
 };
 
-const getPresetRuleCount = (presetKey) => {
-  const rules = PREDEFINED_RULE_SETS[presetKey] || [];
-  return new Set([...MANDATORY_RULES, ...rules]).size;
+const getRuleSchemeCount = (schemeKey) => {
+  const scheme = RULE_SCHEMES[schemeKey];
+  if (!scheme) return 0;
+  const companions = scheme.rules.flatMap(name => COMPANION_RULES[name] ?? []);
+  return new Set([...MANDATORY_RULES, ...scheme.rules, ...companions]).size;
 };
 
 const AdvancedSection = ({ id, title, icon, children }) => (
@@ -93,6 +95,10 @@ export const Form = (props) => {
   const scriptContent = `
     window.APP_TRANSLATIONS = ${JSON.stringify(translations)};
     window.PREDEFINED_RULE_SETS = ${JSON.stringify(PREDEFINED_RULE_SETS)};
+    window.LEGACY_PRESET_RULE_SETS = ${JSON.stringify(LEGACY_PRESET_RULE_SETS)};
+    window.RULE_SCHEMES = ${JSON.stringify(RULE_SCHEMES)};
+    window.RULE_SCHEME_ALIASES = ${JSON.stringify(RULE_SCHEME_ALIASES)};
+    window.DEFAULT_RULE_SCHEME_ID = ${JSON.stringify(DEFAULT_RULE_SCHEME_ID)};
     window.MANDATORY_RULES = ${JSON.stringify(MANDATORY_RULES)};
     window.HIDDEN_RULES = ${JSON.stringify(HIDDEN_RULES)};
     window.BASE_RULES = ${JSON.stringify(MANDATORY_RULES)};
@@ -181,20 +187,24 @@ export const Form = (props) => {
       <div class="mb-4">
         <div class="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">{t('rulePreset')}</div>
         <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
-          {RULE_PRESET_KEYS.map((presetKey) => (
-            <button
-              type="button"
-              x-on:click={`selectRulePreset('${presetKey}')`}
-              x-bind:aria-pressed={`(selectedPredefinedRule === '${presetKey}').toString()`}
-              class="min-h-14 rounded-lg border px-3 py-2 text-left transition-colors"
-              x-bind:class={`selectedPredefinedRule === '${presetKey}'
-                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 hover:border-primary-300 dark:hover:border-primary-700'`}
-            >
-              <span class="block text-sm font-semibold">{t(presetKey)}</span>
-              <span class="mt-1 block text-xs opacity-70">{getPresetRuleCount(presetKey)} {t('rulesUnit')}</span>
-            </button>
-          ))}
+          {RULE_SCHEME_KEYS.map((schemeKey) => {
+            const scheme = RULE_SCHEMES[schemeKey];
+            return (
+              <button
+                type="button"
+                x-on:click={`selectRulePreset('${schemeKey}')`}
+                x-bind:aria-pressed={`(selectedPredefinedRule === '${schemeKey}').toString()`}
+                class="min-h-20 rounded-lg border px-3 py-2 text-left transition-colors"
+                x-bind:class={`selectedPredefinedRule === '${schemeKey}'
+                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                  : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 hover:border-primary-300 dark:hover:border-primary-700'`}
+              >
+                <span class="block text-sm font-semibold">{t(scheme.nameKey)}</span>
+                <span class="mt-1 block text-xs opacity-70">{t(scheme.summaryKey)}</span>
+                <span class="mt-1 block text-[11px] opacity-60">{getRuleSchemeCount(schemeKey)} {t('rulesUnit')}</span>
+              </button>
+            );
+          })}
           <button
             type="button"
             x-on:click="selectCustomRules()"
@@ -244,7 +254,9 @@ export const Form = (props) => {
     </div>
   </div>
 
-  <div x-show="selectedPredefinedRule === 'custom'" class="flex flex-wrap gap-2">
+  <div x-show="selectedPredefinedRule === 'custom'">
+    <p class="mb-2 text-xs font-semibold text-gray-500 dark:text-gray-400">{t('advancedCategoryRules')}</p>
+    <div class="flex flex-wrap gap-2">
     {VISIBLE_RULES.map((rule) => (
       <label class="flex items-center px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 hover:bg-primary-50 dark:hover:bg-primary-900/20 cursor-pointer transition-colors group">
         <input
@@ -262,6 +274,7 @@ export const Form = (props) => {
         </span>
       </label>
     ))}
+    </div>
   </div>
 
     </AdvancedSection>
